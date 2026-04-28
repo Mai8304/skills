@@ -1,9 +1,9 @@
 ---
-name: url-to-design
+name: site-to-design
 description: Use when a user wants to generate, extract, audit, or refine a Google DESIGN.md file from one or more ordinary public website URLs rather than from a Stitch project.
 ---
 
-# URL to DESIGN.md
+# Site to DESIGN.md
 
 ## Overview
 
@@ -46,11 +46,11 @@ This is the URL/Playwright path. Use the separate `design-md` skill when the sou
 
 ## Evidence Script
 
-Run from a project or scratch directory that has Playwright installed. Resolve `scripts/extract-url-design-evidence.js` relative to this skill directory.
+Run from a project or scratch directory that has Playwright installed:
 
 ```bash
 npm install --save-dev @playwright/test --ignore-scripts
-node <this-skill>/scripts/extract-url-design-evidence.js \
+node ~/.codex/skills/site-to-design/scripts/extract-url-design-evidence.js \
   --out .design-md-evidence \
   --channel chrome \
   https://example.com
