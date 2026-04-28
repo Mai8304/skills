@@ -1,0 +1,4 @@
+interface:
+  display_name: "URL to DESIGN.md"
+  short_description: "Generate DESIGN.md from public URLs"
+  default_prompt: "Use $url-to-design to extract a Google DESIGN.md from this website URL."
