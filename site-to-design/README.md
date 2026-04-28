@@ -1,14 +1,20 @@
 # Site to DESIGN.md
 
-从一个或多个公开网站 URL 生成 Google `DESIGN.md`。它不是直接让模型凭 URL 猜测设计系统，而是先用浏览器采集真实页面证据，再把颜色、字体、间距、圆角、阴影和组件模式提炼成可校验的 `DESIGN.md`。
+**语言 / Language:** 中文 | [English](./README.en.md)
 
-默认浏览器为本机 Chrome：
+从一个或多个公开网站 URL 生成 Google `DESIGN.md`。流程不会直接让模型凭 URL 猜测设计系统，而是先用浏览器采集真实页面证据，再把颜色、字体、间距、圆角、阴影和组件模式提炼成可校验、可导出的 `DESIGN.md`。
+
+默认浏览器使用本机 Chrome：
 
 ```js
 channel: "chrome"
 ```
 
+## 工作流
+
 ![Site to DESIGN.md 工作流](./assets/workflow.svg)
+
+这条流程适合普通公开网站：先捕获桌面端和移动端页面，再抽取 DOM、computed styles、CSS variables、截图和组件候选，最后综合为符合 Google `DESIGN.md` 规范的设计系统文档。
 
 ## 如何使用
 
@@ -40,9 +46,9 @@ Use $site-to-design to generate DESIGN.md from:
 - https://example.com/product
 ```
 
-适合选择的页面包括：首页、产品页、定价页、登录页、列表页、详情页、表单页和品牌内容页。
+推荐页面类型：首页、产品页、定价页、登录页、列表页、详情页、表单页和品牌内容页。
 
-### 3. 可选：直接采集浏览器证据
+### 3. 可选：只采集浏览器证据
 
 如果你只想先采集原始证据，可以直接运行脚本：
 
@@ -93,12 +99,10 @@ npx @google/design.md export --format dtcg DESIGN.md >/tmp/design-md-dtcg.json
 - 导航、按钮、卡片、表单、徽章、媒体网格、footer、modal 等组件候选。
 - 可以提升为 `DESIGN.md` tokens 的重复模式。
 
-## 对比说明
+## 对比效果
 
-![证据优先流程对比](./assets/comparison.svg)
+下面是同一套 Airbnb 页面素材的对比：左侧是原始 Airbnb 页面截图，右侧是依据提炼出的 `DESIGN.md` 重新设计后的页面截图。
 
-直接把 URL 交给模型也能生成一份看似合理的设计总结，但它容易把真实页面观察、已有记忆和推断混在一起。Site to DESIGN.md 的流程更慢，因为它先采集浏览器证据；但结果更容易复核、校验、导出和长期维护。
-
-## English note
-
-This README is Chinese-first by default. The workflow still produces standard Google `DESIGN.md` files and keeps command names, package names, and token terminology in English where that is the expected interface.
+| Airbnb 原图 | 通过 DESIGN.md 设计后的网站截图 |
+|---|---|
+| ![Airbnb 原图](./assets/20260428-094121-airbnb-reference-desktop-dismissed.png) | ![通过 DESIGN.md 设计后的网站截图](./assets/20260428-173857-localhost-5175-desktop.png) |
