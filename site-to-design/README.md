@@ -1,33 +1,37 @@
 # Site to DESIGN.md
 
-Generate a Google `DESIGN.md` from one or more public website URLs using browser evidence instead of guesswork.
+从一个或多个公开网站 URL 生成 Google `DESIGN.md`。它不是直接让模型凭 URL 猜测设计系统，而是先用浏览器采集真实页面证据，再把颜色、字体、间距、圆角、阴影和组件模式提炼成可校验的 `DESIGN.md`。
 
-The pipeline opens the site with Playwright using local Chrome by default, extracts DOM structure, CSS variables, computed styles, screenshots, typography, colors, spacing, radii, shadows, and component candidates, then synthesizes a spec-friendly `DESIGN.md`.
+默认浏览器为本机 Chrome：
 
-![Site to DESIGN.md workflow](./assets/workflow.svg)
+```js
+channel: "chrome"
+```
 
-## How to use
+![Site to DESIGN.md 工作流](./assets/workflow.svg)
 
-### 1. Install
+## 如何使用
 
-Install this directory as a skill from GitHub:
+### 1. 安装
+
+从 GitHub 安装这个目录：
 
 ```bash
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
   --url https://github.com/Mai8304/skills/tree/main/site-to-design
 ```
 
-Restart your agent environment after installation so the new skill is discovered.
+安装后重启你的 agent 环境，让新能力被自动发现。
 
-### 2. Run on a website
+### 2. 生成 DESIGN.md
 
-Use the skill with one or more URLs:
+给一个网站 URL：
 
 ```text
 Use $site-to-design to generate a Google DESIGN.md from https://example.com
 ```
 
-For a deeper extraction, provide several representative URLs:
+如果想让设计系统更完整，建议提供多个代表页面：
 
 ```text
 Use $site-to-design to generate DESIGN.md from:
@@ -36,9 +40,11 @@ Use $site-to-design to generate DESIGN.md from:
 - https://example.com/product
 ```
 
-### 3. Optional direct evidence extraction
+适合选择的页面包括：首页、产品页、定价页、登录页、列表页、详情页、表单页和品牌内容页。
 
-The bundled script can collect raw browser evidence before synthesis:
+### 3. 可选：直接采集浏览器证据
+
+如果你只想先采集原始证据，可以直接运行脚本：
 
 ```bash
 npm install --save-dev @playwright/test --ignore-scripts
@@ -48,13 +54,7 @@ node ~/.codex/skills/site-to-design/scripts/extract-url-design-evidence.js \
   https://example.com
 ```
 
-Chrome is the default browser channel:
-
-```js
-channel: "chrome"
-```
-
-Override it only when you intentionally want another Chromium channel:
+输出目录会包含 `evidence.json` 和截图。默认使用 Chrome；只有在你明确需要其他 Chromium 渠道时，才需要覆盖 `--channel`：
 
 ```bash
 node ~/.codex/skills/site-to-design/scripts/extract-url-design-evidence.js \
@@ -62,20 +62,20 @@ node ~/.codex/skills/site-to-design/scripts/extract-url-design-evidence.js \
   https://example.com
 ```
 
-## Expected output
+## 默认输出
 
-The normal output is a single `DESIGN.md` file with:
+默认只交付一个 `DESIGN.md` 文件，里面包含：
 
-- YAML front matter for machine-readable tokens.
-- Markdown sections for design rationale and usage guidance.
-- Colors, typography, spacing, radii, and component tokens.
-- Notes that separate confirmed browser evidence from inferred design interpretation.
+- YAML front matter：机器可读的 design tokens。
+- Markdown 正文：设计风格、使用规则和设计理由。
+- 颜色、字体、间距、圆角和组件 tokens。
+- 对 confirmed browser evidence 和 inferred design interpretation 的区分。
 
-Evidence files such as screenshots and `evidence.json` are implementation artifacts. Keep them private unless review or debugging requires them.
+截图、HTML 快照、`evidence.json` 属于中间证据。除非需要审查或调试，一般不作为最终交付物展示。
 
-## Validation
+## 校验方式
 
-Validate every generated `DESIGN.md` with the official package:
+每个生成的 `DESIGN.md` 都应该通过官方工具校验：
 
 ```bash
 npx @google/design.md lint DESIGN.md --format=json
@@ -83,18 +83,22 @@ npx @google/design.md export --format tailwind DESIGN.md >/tmp/design-md-tailwin
 npx @google/design.md export --format dtcg DESIGN.md >/tmp/design-md-dtcg.json
 ```
 
-Keep extracted brand colors even when contrast warnings appear. A warning is useful feedback, not a reason to rewrite the brand.
+如果真实品牌色触发 contrast warning，不要为了消除 warning 擅自改颜色。提取模式下应该保留真实值，并把 warning 作为可访问性风险记录。
 
-## What the workflow extracts
+## 工作流会提取什么
 
-- CSS variables and design token hints.
-- Computed color, font, spacing, radius, and shadow values.
-- Desktop and mobile responsive states.
-- Navigation, buttons, cards, forms, badges, media grids, footer, and modal candidates.
-- Repeated patterns that can be promoted into reusable `DESIGN.md` tokens.
+- CSS variables 和页面里的 token 线索。
+- computed styles 中的颜色、字体、间距、圆角和阴影。
+- 桌面端和移动端响应式状态。
+- 导航、按钮、卡片、表单、徽章、媒体网格、footer、modal 等组件候选。
+- 可以提升为 `DESIGN.md` tokens 的重复模式。
 
-## Comparison
+## 对比说明
 
-![Evidence-first comparison](./assets/comparison.svg)
+![证据优先流程对比](./assets/comparison.svg)
 
-Direct URL prompting can produce a plausible design summary, but it may mix observed facts with memory or inference. Site to DESIGN.md is slower because it collects browser evidence first, but the result is easier to validate, export, and maintain.
+直接把 URL 交给模型也能生成一份看似合理的设计总结，但它容易把真实页面观察、已有记忆和推断混在一起。Site to DESIGN.md 的流程更慢，因为它先采集浏览器证据；但结果更容易复核、校验、导出和长期维护。
+
+## English note
+
+This README is Chinese-first by default. The workflow still produces standard Google `DESIGN.md` files and keeps command names, package names, and token terminology in English where that is the expected interface.
