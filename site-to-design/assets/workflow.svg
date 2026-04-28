@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="360" viewBox="0 0 1120 360" role="img" aria-labelledby="title desc">
+  <title id="title">Site to DESIGN.md workflow</title>
+  <desc id="desc">A six step workflow from website URLs to a validated DESIGN.md file.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#334155"/>
+    </marker>
+    <style>
+      .bg { fill: #f8fafc; }
+      .panel { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.5; rx: 18; }
+      .accent { fill: #2563eb; }
+      .green { fill: #059669; }
+      .text { fill: #0f172a; font-family: Inter, Arial, sans-serif; font-size: 15px; font-weight: 700; }
+      .muted { fill: #475569; font-family: Inter, Arial, sans-serif; font-size: 12px; font-weight: 500; }
+      .step { fill: #ffffff; stroke: #93c5fd; stroke-width: 1.5; rx: 14; }
+      .line { stroke: #334155; stroke-width: 2; marker-end: url(#arrow); }
+      .num { fill: #ffffff; font-family: Inter, Arial, sans-serif; font-size: 13px; font-weight: 800; text-anchor: middle; dominant-baseline: middle; }
+    </style>
+  </defs>
+  <rect class="bg" width="1120" height="360"/>
+  <rect class="panel" x="28" y="34" width="1064" height="292"/>
+  <text class="text" x="56" y="72">Evidence-first Site to DESIGN.md workflow</text>
+  <text class="muted" x="56" y="94">Use browser evidence first, then synthesize tokens and prose that pass official DESIGN.md validation.</text>
+
+  <g transform="translate(58,132)">
+    <rect class="step" x="0" y="0" width="142" height="112"/>
+    <circle class="accent" cx="28" cy="28" r="14"/>
+    <text class="num" x="28" y="28">1</text>
+    <text class="text" x="18" y="58">URLs</text>
+    <text class="muted" x="18" y="80">Input one or more</text>
+    <text class="muted" x="18" y="96">public pages</text>
+  </g>
+  <line class="line" x1="206" y1="188" x2="250" y2="188"/>
+
+  <g transform="translate(258,132)">
+    <rect class="step" x="0" y="0" width="142" height="112"/>
+    <circle class="accent" cx="28" cy="28" r="14"/>
+    <text class="num" x="28" y="28">2</text>
+    <text class="text" x="18" y="58">Chrome</text>
+    <text class="muted" x="18" y="80">Playwright with</text>
+    <text class="muted" x="18" y="96">channel chrome</text>
+  </g>
+  <line class="line" x1="406" y1="188" x2="450" y2="188"/>
+
+  <g transform="translate(458,132)">
+    <rect class="step" x="0" y="0" width="142" height="112"/>
+    <circle class="accent" cx="28" cy="28" r="14"/>
+    <text class="num" x="28" y="28">3</text>
+    <text class="text" x="18" y="58">Evidence</text>
+    <text class="muted" x="18" y="80">DOM, CSS vars,</text>
+    <text class="muted" x="18" y="96">computed styles</text>
+  </g>
+  <line class="line" x1="606" y1="188" x2="650" y2="188"/>
+
+  <g transform="translate(658,132)">
+    <rect class="step" x="0" y="0" width="142" height="112"/>
+    <circle class="accent" cx="28" cy="28" r="14"/>
+    <text class="num" x="28" y="28">4</text>
+    <text class="text" x="18" y="58">Tokens</text>
+    <text class="muted" x="18" y="80">Cluster color, type,</text>
+    <text class="muted" x="18" y="96">spacing, shapes</text>
+  </g>
+  <line class="line" x1="806" y1="188" x2="850" y2="188"/>
+
+  <g transform="translate(858,132)">
+    <rect class="step" x="0" y="0" width="142" height="112"/>
+    <circle class="accent" cx="28" cy="28" r="14"/>
+    <text class="num" x="28" y="28">5</text>
+    <text class="text" x="18" y="58">DESIGN.md</text>
+    <text class="muted" x="18" y="80">YAML tokens plus</text>
+    <text class="muted" x="18" y="96">Markdown rationale</text>
+  </g>
+  <line class="line" x1="1006" y1="188" x2="1036" y2="188"/>
+
+  <g transform="translate(902,262)">
+    <rect class="step" x="0" y="0" width="166" height="44"/>
+    <circle class="green" cx="24" cy="22" r="13"/>
+    <text class="num" x="24" y="22">6</text>
+    <text class="text" x="46" y="27">lint and export</text>
+  </g>
+</svg>

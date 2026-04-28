@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="440" viewBox="0 0 1120 440" role="img" aria-labelledby="title desc">
+  <title id="title">Direct prompt versus evidence-first generation</title>
+  <desc id="desc">A comparison of direct URL-to-LLM generation and the evidence-first Site to DESIGN.md workflow.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f8fafc; }
+      .card { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.5; rx: 18; }
+      .bad { fill: #fff1f2; stroke: #fb7185; stroke-width: 1.2; rx: 12; }
+      .good { fill: #ecfdf5; stroke: #34d399; stroke-width: 1.2; rx: 12; }
+      .title { fill: #0f172a; font-family: Inter, Arial, sans-serif; font-size: 21px; font-weight: 800; }
+      .heading { fill: #0f172a; font-family: Inter, Arial, sans-serif; font-size: 17px; font-weight: 800; }
+      .text { fill: #334155; font-family: Inter, Arial, sans-serif; font-size: 13px; font-weight: 600; }
+      .muted { fill: #64748b; font-family: Inter, Arial, sans-serif; font-size: 12px; font-weight: 500; }
+      .badge-bad { fill: #e11d48; }
+      .badge-good { fill: #059669; }
+      .badge-text { fill: #ffffff; font-family: Inter, Arial, sans-serif; font-size: 12px; font-weight: 800; text-anchor: middle; dominant-baseline: middle; }
+    </style>
+  </defs>
+  <rect class="bg" width="1120" height="440"/>
+  <text class="title" x="56" y="54">Why Site to DESIGN.md uses an evidence-first pipeline</text>
+  <text class="muted" x="56" y="78">The goal is not just a plausible design description. The goal is a reproducible DESIGN.md grounded in browser evidence.</text>
+
+  <rect class="card" x="56" y="112" width="478" height="274"/>
+  <circle class="badge-bad" cx="88" cy="148" r="18"/>
+  <text class="badge-text" x="88" y="148">A</text>
+  <text class="heading" x="118" y="154">Direct URL prompt</text>
+  <text class="muted" x="118" y="176">Fast, but often speculative.</text>
+
+  <rect class="bad" x="88" y="204" width="394" height="36"/>
+  <text class="text" x="108" y="227">May infer colors, fonts, and components from memory</text>
+  <rect class="bad" x="88" y="252" width="394" height="36"/>
+  <text class="text" x="108" y="275">May miss responsive states and hidden UI structure</text>
+  <rect class="bad" x="88" y="300" width="394" height="36"/>
+  <text class="text" x="108" y="323">Hard to explain where each design decision came from</text>
+
+  <rect class="card" x="586" y="112" width="478" height="274"/>
+  <circle class="badge-good" cx="618" cy="148" r="18"/>
+  <text class="badge-text" x="618" y="148">B</text>
+  <text class="heading" x="648" y="154">Evidence-first pipeline</text>
+  <text class="muted" x="648" y="176">Slower, but traceable and spec-friendly.</text>
+
+  <rect class="good" x="618" y="204" width="394" height="36"/>
+  <text class="text" x="638" y="227">Extracts CSS variables and computed browser styles</text>
+  <rect class="good" x="618" y="252" width="394" height="36"/>
+  <text class="text" x="638" y="275">Clusters repeated colors, type, spacing, and components</text>
+  <rect class="good" x="618" y="300" width="394" height="36"/>
+  <text class="text" x="638" y="323">Validates YAML tokens with official DESIGN.md tooling</text>
+
+  <text class="heading" x="56" y="414">Recommended:</text>
+  <text class="text" x="178" y="414">Use direct prompting for rough notes. Use Site to DESIGN.md when the output must be reusable, auditable, and lintable.</text>
+</svg>
