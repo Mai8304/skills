@@ -24,12 +24,19 @@ word.
 - **Detect terminal width** at runtime; fall back to a sane default (e.g. 80) only when it
   is genuinely undetectable — never hardcode it as the assumption.
 - Provide an **ASCII fallback** for every Unicode glyph when the locale/terminal can't render it.
-- Clean up on interrupt: restore the cursor, print a newline, flush, on Ctrl-C.
+- **Measure display width** (`wcwidth` / east-asian-width) for any alignment or truncation —
+  CJK and most emoji render as **two columns**. (Layout rules in `layout.md`.)
+- **Flush at meaningful points.** When stdout isn't a TTY it is *block-buffered*, so
+  unflushed progress or results look hung and then arrive in a burst — flush per line/record,
+  or line-buffer.
+- Clean up on interrupt: restore the cursor, print a newline, flush, on Ctrl-C (exit `130`).
 
 **Don't**
 
 - Emit ANSI escapes or spinners to a pipe / file / CI log.
-- Assume 80 columns, or assume a UTF-8 terminal.
+- Assume 80 columns, a UTF-8 terminal, or single-width characters.
+- **Block on stdin to prompt when there's no TTY** (CI / pipe / agent) — use a flag or a
+  default, or fail with a clear message; never deadlock.
 - Exit `0` on failure, or reuse one exit code for unrelated failures.
 
 ## Real examples
@@ -50,13 +57,15 @@ produces un-styled output. Both are TTY/`NO_COLOR` detection doing its job.
 **Detection checklist** (run before decorating):
 
 ```
-isatty(stdout)?        no  → no color, no spinner, no animation
+isatty(stdout)?        no  → no color, no spinner, no animation, no interactive prompt
 NO_COLOR set?          yes → no color
 FORCE_COLOR set?       yes → color even when piped (deliberate override)
 TERM=dumb?             yes → no color, no cursor tricks
-CI set?                yes → plain, non-animated
+CI set?                yes → plain, non-animated, never prompt (use flags/defaults)
 COLUMNS / ioctl width  → wrap to it; fall back to 80 only if undetectable
 locale not UTF-8?      → ASCII fallback glyphs
+text has CJK / emoji?  → measure by display width (2 cols), not char count
+stdout not a TTY?      → block-buffered: flush per line/record so it doesn't look hung
 ```
 
 **Exit codes** (keep the set small and documented):

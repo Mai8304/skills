@@ -1,6 +1,6 @@
 ---
 name: cli-output-design
-description: Use when designing, building, reviewing, or improving a CLI's terminal output so it is accurate, human-usable, agent-usable, and visually clean — covers colors, symbols, status/progress indicators, error messages and copy, layout/wrapping, machine/JSON output for scripts and AI agents, and NO_COLOR / non-TTY / CI adaptation. Not for command/flag structure or interactive wizard design.
+description: Use when designing, building, reviewing, or improving a CLI's terminal output so it is accurate, human-usable, agent-usable, and visually clean — colors, symbols, status/progress indicators, error messages and copy, layout/wrapping, tables/trees/diffs and other output patterns, prompt and selection-menu rendering (y/n, single, multi), CJK/wide-character alignment, machine/JSON output for scripts and AI agents, and NO_COLOR / non-TTY / CI adaptation. Covers how prompts and wizards look, not the input-handling mechanics; not for command/flag structure design.
 version: 0.1.0
 ---
 
@@ -42,7 +42,8 @@ Judge every output decision through these, in priority order:
 - **Every long operation reaches a visible terminal state** (✓ / ✗). No orphaned spinners.
 - **One status vocabulary** across the whole CLI: `running · pass · fail · warn · skip ·
   changed · unchanged`. Never mix `ok` / `done` / `success` for one state.
-- **Respect width.** Wrap prose (cap ~100 cols); never wrap paths, URLs, or commands.
+- **Respect width.** Wrap prose (cap ~100 cols); never wrap paths, URLs, or commands; measure
+  alignment and truncation by *display width* (CJK and most emoji are 2 columns), not characters.
 
 ## Decision quick-reference
 
@@ -54,6 +55,7 @@ Judge every output decision through these, in priority order:
 | error / warning / message text | what happened · why · `Next:`; one vocabulary | `copywriting.md` |
 | spacing, tables, wrapping, indent | width-aware; whitespace is structure | `layout.md` |
 | a known shape (table/tree/diff/log/…) | use the cookbook recipe | `output-patterns.md` |
+| a prompt / confirmation / menu | shape = cardinality; never block in non-TTY | `output-patterns.md` |
 | `--json` / piped / output for an agent | pure data, stable fields, stdout-only | `agent-readable-output.md` |
 | anything in a weird terminal / CI | detect + degrade; correct exit codes | `robustness.md` |
 
@@ -71,6 +73,9 @@ Stop if you're about to:
 - mix `ok` / `done` / `success` / `passed` for one status
 - use emoji as default decoration
 - put diagnostics or notices on stdout, polluting piped data
+- align columns by character/byte count instead of display width (breaks on CJK/emoji)
+- run a destructive action without previewing what it affects or defaulting to "No"
+- block on stdin to prompt when there's no TTY (deadlocks CI, pipes, and agents)
 
 ## Pre-ship checklist
 
@@ -84,6 +89,9 @@ Stop if you're about to:
 - [ ] Exit codes are correct (0 success, non-zero failure, documented)
 - [ ] Long operations always reach a visible terminal state (✓ / ✗)
 - [ ] Empty results say so helpfully (not a blank screen)
+- [ ] Output with CJK / wide characters stays aligned (measured by display width)
+- [ ] Destructive actions preview their blast radius, default to No, and offer `--yes`
+- [ ] Prompts have a non-interactive path (flags/defaults) and never block in CI / pipes / agents
 
 ## References
 

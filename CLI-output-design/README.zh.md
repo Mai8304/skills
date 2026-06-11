@@ -50,7 +50,7 @@ cp -r skills/CLI-output-design ~/.claude/skills/cli-output-design
 | **会引导的文案** | 错误说清*发生了什么 · 为什么 · 下一步做什么*；统一状态词表（`pass / fail / warn / skip …`）；人性化的时长与体积（`1.2 MB`、`4.2s`）。 |
 | **宽度感知排版** | 表格、文件树、列表、键值块会对齐、换行，并在窄终端优雅降级；标识符和 URL 永不被折断。 |
 | **机器与 agent 契约** | `stdout` = 数据，`stderr` = 对话；`--json` 纯净、稳定、可解析；状态词稳定，AI agent 能直接从日志读出下一步动作。 |
-| **17 个现成 pattern** | 覆盖你真正要渲染的每种形态——下载、文件树、对话、diff、表格、诊断、日志、dry-run、空状态……（见下方菜谱）。 |
+| **一整套 pattern 菜谱** | 覆盖你真正要渲染的每种形态——下载、文件树、对话、diff、表格、诊断、日志、dry-run、空状态、提示符与选择菜单、嵌套任务树……（见下方菜谱）。 |
 
 agent 永远先读简短的 `SKILL.md` 脊椎，再只按需拉取当前要渲染那一项的 reference——所以每个
 场景都得到正确处理，又不必加载整本书。
@@ -195,7 +195,7 @@ CLI-output-design/
     ├── status-and-progress.md     # spinner、进度条、checklist、终态
     ├── copywriting.md             # 错误 = 是什么 / 为什么 / Next；语气；人性化数值
     ├── layout.md                  # 宽度、换行、对齐、表格、留白
-    ├── output-patterns.md         # 17 个 pattern 菜谱（见下）
+    ├── output-patterns.md         # pattern 菜谱（见下）
     ├── agent-readable-output.md   # AI 可读日志 + --json 契约
     └── robustness.md              # TTY / NO_COLOR / CI 检测、退出码
 ```
@@ -203,17 +203,19 @@ CLI-output-design/
 `SKILL.md` 短小、每次都读；每个 reference 只在用到对应主题时才加载（渐进披露），所以在你
 需要深度之前，这个 skill 一直很轻。
 
-## 17 个 pattern 菜谱
+## pattern 菜谱
 
 `output-patterns.md` 为每种形态给一份菜谱——结构、TTY 示例、以及管道/窄屏/agent 下的降级
 ——分为四组：
 
 - **数据形态**——表格 · 列表 · 文件树 · 对象 / `describe` 视图 · 代码与 diff ·
   内容块 · 分页
-- **生命周期与结局**——进度 · checklist · 诊断（带源码帧）· 结果 / 测试汇总 ·
+- **生命周期与结局**——进度 · 嵌套任务树 · checklist · 诊断（带源码帧）· 结果 / 测试汇总 ·
   dry-run / 变更预览 · 空状态
 - **流式与对话**——聊天 / agent transcript · 流式输出
 - **通知与日志**——分级日志与 verbosity 档位 · 版本 / 弃用通知
+- **提示符与选择**——确认与危险动作（y/N）· 单选（圆形 radio）· 多选（方形 checkbox）·
+  控制层、导航与取消
 
 ## 何时使用
 

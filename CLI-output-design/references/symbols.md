@@ -74,5 +74,19 @@ Unicode              ASCII fallback
 **replace the spinner in place with the terminal state** (`✓`/`✗`) — never persist a
 spinner frame into a log or JSON. (See `status-and-progress.md`.)
 
+**Selection & prompt glyphs** — shape encodes cardinality (round = pick one, square = pick
+many); the cursor is separate from the selection state (see `output-patterns.md`):
+
+| Unicode | Meaning | ASCII fallback |
+|---|---|---|
+| `❯` | cursor / current row | `>` |
+| `●` / `○` | radio selected / unselected (single-select) | `(•)` / `( )` |
+| `[x]` / `[ ]` | checkbox checked / unchecked (multi-select) | `[x]` / `[ ]` |
+| `■` | cancelled end-cap | `[cancelled]` |
+
+**Display width:** these and all glyphs assume width-1 cells. Data you render (table cells,
+tree labels, prompt options) may contain **double-width** CJK or emoji — align and truncate
+by *display width*, not character count. See `layout.md` and `robustness.md`.
+
 Cross-links: `color.md` for the color each glyph pairs with, `copywriting.md` for the word,
 `robustness.md` for when ASCII fallback / no-Unicode mode applies.

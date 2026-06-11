@@ -69,11 +69,35 @@ A doctor-style block and its narrow-terminal fallback:
       not configured
 ```
 
+## Measure display width, not character count
+
+Alignment, padding, and truncation must be computed in **display columns**, not bytes or
+runes. **CJK ideographs, full-width punctuation, and most emoji occupy two columns**; a
+grapheme cluster (e.g. an emoji with a modifier) is one unit. Counting characters instead
+silently breaks every aligned shape the moment a cell holds Chinese/Japanese/Korean text:
+
+```
+# Wrong — padded by rune count, so the CJK rows run long
+NAME      STATUS
+配置文件      missing
+gateway   ok
+
+# Right — padded by display width (each 中文 char = 2 cols)
+NAME        STATUS
+配置文件    missing
+gateway     ok
+```
+
+Use a width-aware function (`wcwidth` / east-asian-width) for column padding and for
+`…`-truncation, so a cell never overruns or under-fills its column. (Mechanics in
+`robustness.md`.)
+
 ## Cheat-sheet
 
 - **Indent** child detail by 2 spaces per level; keep nesting shallow.
 - **Spacing:** one blank line between sections; none inside a tight list.
 - **Width:** detect at runtime; wrap prose, cap ~100; never wrap identifiers/paths/URLs.
+- **Display width:** pad/align/truncate by display columns (CJK & emoji = 2), not char count.
 - **Tables:** borderless, homogeneous data only, numbers right-aligned, narrow fallback.
 - **Truncate** with `…`, keeping it meaningful — paths in the middle: `src/…/main.go`.
 - Numeric columns: right-align, align decimal points (values themselves in `copywriting.md`).

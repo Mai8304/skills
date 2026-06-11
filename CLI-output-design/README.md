@@ -56,7 +56,7 @@ seven systems:
 | **Copy that guides** | Errors state *what happened · why · what to do next*; one status vocabulary (`pass / fail / warn / skip …`); humanized durations and sizes (`1.2 MB`, `4.2s`). |
 | **Width-aware layout** | Tables, file trees, lists, and key-value blocks that align, wrap, and fall back gracefully on a narrow terminal; identifiers and URLs are never wrapped. |
 | **A machine & agent contract** | `stdout` = data, `stderr` = conversation; `--json` is pure, stable, and parseable; status words stay stable so an AI agent can read the next action straight from the logs. |
-| **17 ready-made patterns** | Recipes for every shape you actually render — downloads, trees, conversations, diffs, tables, diagnostics, logs, dry-runs, empty states… (see the cookbook below). |
+| **A pattern cookbook** | Recipes for every shape you actually render — downloads, trees, conversations, diffs, tables, diagnostics, logs, dry-runs, empty states, prompts & selection menus, nested task trees… (see the cookbook below). |
 
 The agent always reads the short `SKILL.md` spine, then pulls in only the reference for what
 it's rendering — so each scenario gets the right treatment without loading the whole book.
@@ -204,7 +204,7 @@ CLI-output-design/
     ├── status-and-progress.md     # spinners, bars, checklists, terminal states
     ├── copywriting.md             # error = what / why / Next; voice; humanized values
     ├── layout.md                  # width, wrapping, alignment, tables, whitespace
-    ├── output-patterns.md         # the 17-pattern cookbook (below)
+    ├── output-patterns.md         # the pattern cookbook (below)
     ├── agent-readable-output.md   # AI-readable logs + the --json contract
     └── robustness.md              # TTY / NO_COLOR / CI detection, exit codes
 ```
@@ -219,10 +219,12 @@ piped/narrow/agent degradation — in four groups:
 
 - **Data shapes** — tables · lists · file trees · object / `describe` views · code & diffs ·
   content blocks · pagination
-- **Lifecycle & outcomes** — progress · checklists · diagnostics (with source frames) ·
-  result / test summaries · dry-run / change previews · empty states
+- **Lifecycle & outcomes** — progress · nested task trees · checklists · diagnostics (with
+  source frames) · result / test summaries · dry-run / change previews · empty states
 - **Streaming & conversation** — chat / agent transcripts · streaming output
 - **Notices & logs** — leveled logs & verbosity tiers · version / deprecation notices
+- **Prompts & selection** — confirmation & destructive actions (y/N) · single-select (radio) ·
+  multi-select (checkbox) · controls, navigation & cancellation
 
 ## When to use it
 

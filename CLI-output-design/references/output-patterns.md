@@ -101,6 +101,25 @@ unknown; multi-item → live region collapsing to a summary; ~10–20 fps; repla
 `✓`/`✗`. **Piped →** discrete milestone lines, no `\r`. (Full detail in
 `status-and-progress.md`.)
 
+### Nested task progress
+
+For multi-stage work (builds, deploy pipelines, monorepo task graphs) — a tree of tasks,
+each with its own spinner → `✓`/`✗`, parents rolling up child status:
+
+```
+◆ Deploy
+  ✓ build              12.4s
+  ⠙ migrate
+    ✓ schema           0.8s
+    ⠙ seed data
+  • smoke tests        pending
+```
+
+Indent children by 2; a parent shows `✓` only when **all** children pass, `✗` if any fail
+(and surfaces which one). In-progress nodes spin; not-yet-started nodes are dim `•`. On a
+narrow terminal or non-TTY, flatten to sequential `parent → child` milestone lines (no live
+tree). Cross-link `status-and-progress.md`.
+
 ### Checklist
 
 ```
@@ -163,8 +182,9 @@ Run with --apply to execute.
 
 `+`/`~`/`-` prefixes (add/change/destroy), aligned, with a **count header**; show
 `old → new` for changes. **"No changes" is a first-class state** (`No changes. Everything is
-up to date.`). Before a mutating apply, show this summary + blast radius, then confirm; default
-to the safe path. **Piped / `--json` →** the structured change set.
+up to date.`). Before a mutating apply, show this summary + blast radius, then confirm (see
+`Confirmation & destructive actions`); default to the safe path. **Piped / `--json` →** the
+structured change set.
 
 ### Empty states
 
@@ -233,3 +253,75 @@ Non-blocking, on **stderr**, visually quiet (dim), never interrupting the primar
 stdout. Show once / rate-limited; respect an opt-out env var. Deprecation warnings name
 what's deprecated, the replacement, and the removal timeline. **Never** let a notice pollute
 piped / `--json` stdout.
+
+## Prompts & selection
+
+The *rendering* and *state* of interactive prompts — not the input-handling mechanics. The
+cross-cutting rule comes first: **a prompt must never block on stdin in a non-TTY / CI /
+`--json` context.** Detect it and use a flag, a default, or fail clearly (`use --yes /
+--region=… in non-interactive mode`). And always distinguish a user **cancel** (Ctrl-C →
+restore the terminal, exit `130`) from a **"No" answer** (a valid choice → exit `0`) — scripts
+and agents read the exit code to tell "aborted" from "declined."
+
+### Confirmation & destructive actions
+
+Show the **blast radius before the question**, default destructive prompts to **No**, and
+offer a flag to skip:
+
+```
+This will delete 3 buckets and 1 database — cannot be undone:
+  - s3://logs-prod
+  - s3://logs-staging
+  - rds: analytics-primary
+
+Continue?  [y/N]
+```
+
+`[y/N]` capitalizes the **default** (here No). Low-stakes prompts may default to Yes (`[Y/n]`).
+`--yes`/`-y` skips it; in non-TTY/CI, **don't hang** — require `--yes` or fail. (The change
+set itself is the `Dry-run / change-plan preview` pattern above.)
+
+### Single-select (pick one)
+
+**Shape encodes cardinality — round = pick one.** Use either a pointer-only highlight *or* a
+radio `●`/`○` as the cursor, never both on the same row:
+
+```
+? Pick a region    ↑/↓ move · / filter · enter select · esc cancel
+  us-east-1
+❯ us-west-2
+  eu-west-1
+  … 8 more ↓
+```
+
+Long lists scroll in a viewport with a "N more" hint plus **type-to-filter**; wrap around at
+the ends. On confirm, **collapse to one line**: `✓ Region · us-west-2`. ASCII pointer `>`;
+radio fallback `(•)`/`( )`.
+
+### Multi-select (pick any)
+
+**Square = pick many**, carried by two *independent* signals — the cursor `❯` (where you are)
+and the checkbox `[x]`/`[ ]` (what's toggled):
+
+```
+? Select features   space toggle · a all · enter confirm · esc cancel
+❯ [x] auth
+  [ ] billing
+  [x] analytics
+  2 selected
+```
+
+Show the selected count; offer toggle-all. Collapse on confirm: `✓ Features · auth, analytics`.
+Non-TTY → take repeatable flags (`--feature auth --feature analytics`). (Known variant:
+Inquirer.js renders checkboxes with circles `◉/◯`; this skill uses **squares** so the shape
+still signals "pick many.")
+
+### Controls & cancellation (shared)
+
+A dim, concise hint line lists **only the keys this prompt actually uses**, lowercase and
+`·`-separated: `↑/↓ move` · `enter select` · `space toggle` (multi) · `/ filter` (long lists)
+· `esc ‹ back` (multi-step) · `ctrl-c quit`. Support `j`/`k` silently. In a multi-step flow,
+show progress (`Step 2 of 4`) or a breadcrumb, and **`esc`/`←` returns to the previous step
+with its answer restored**. Give `esc` one meaning (back *or* cancel) and keep it consistent.
+On cancel, restore the cursor and terminal, print a quiet `■ Cancelled.` (or nothing), and
+exit `130`.
