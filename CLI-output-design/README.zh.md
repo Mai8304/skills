@@ -1,122 +1,133 @@
-# CLI Output Design
+# CLI 输出设计
 
-**语言 / Language:** [English](./README.md) | 中文
+> 一个 Claude skill，让任何 CLI 的终端输出做到**准确、人类可用、AI 可用、且美观**——
+> 颜色、符号、状态与进度、错误、排版、机器/JSON 输出，以及对管道、`NO_COLOR`、CI 的优雅降级。
 
-让命令行输出更清楚、更可信、更容易行动。
+[English](./README.md) · **中文**
 
-这个 skill 用来设计、检查或改进 CLI 在终端里打印出来的内容。它关注的不是让终端看起来更花哨，而是让用户更快理解：发生了什么、改了什么、还在运行什么、哪里失败了，以及下一步该怎么做。
+---
 
-适合产品 CLI、开发工具、Agent 工具、部署工具、测试命令、诊断命令，以及任何用户需要从终端输出里快速判断状态的场景。
+## 为什么需要它
 
-## 如何使用
+大多数 CLI 是一行 `print` 一行 `print` 攒出来的，毛病一眼能看出来：进度条卡在 99%、
+`Error: failed` 不说原因、ANSI 转义码漏进管道、`--json` 里混着人类话术、表格在窄终端里
+散架。输出看着像临时拼的——因为它就是。
 
-### 1. 安装
+这个 skill 给 AI agent（或与之结对的你）一份精简、有主张的终端输出手册——提炼自优秀 CLI
+的真实行为，以及 [clig.dev](https://clig.dev)、Heroku CLI Style Guide 等来源。最终效果：
+**先准确，其次人能读，再次脚本/agent 能解析，最后看着舒服。** 它是纯指南——零库、零依赖、
+零运行时。
 
-从 GitHub 安装这个目录：
+## 快速安装
+
+**用 `skills` CLI**（合集仓库推荐）：
 
 ```bash
-python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
-  --url https://github.com/Mai8304/skills/tree/main/CLI-output-design
+npx skills add Mai8304/skills -s CLI-output-design -g -y
 ```
 
-安装后重启你的 agent 环境，让新能力被自动发现。
+**手动**（任何会读 skill 的 agent 都适用）：
 
-### 2. 请求 CLI 输出设计
-
-当你在设计或改进终端输出时使用它：
-
-```text
-Use $cli-output-design to review this command output and make it easier to understand.
+```bash
+git clone https://github.com/Mai8304/skills
+cp -r skills/CLI-output-design ~/.claude/skills/cli-output-design
 ```
 
-也可以提供截图、复制出来的终端文本，或者描述一个命令场景：
+放到 `~/.claude/skills/`（全局）或项目的 `.claude/skills/` 下后，agent 会自动加载，并在你
+让它设计、构建、审查或改进 CLI 输出时自动触发。
 
-```text
-Use $cli-output-design to redesign the output for a deploy command.
-It should show progress, changed resources, failures, and the next action clearly.
+## 改造前 / 改造后
+
+指南带来的改变，直接体现在输出本身。
+
+**错误**——说清原因和下一步，别只甩一句 `failed`：
+
 ```
+# 改造前
+Error: failed
 
-### 3. 补充用户场景
+# 改造后
+✗ Config not found
 
-给一点上下文，效果会更好：
-
-- 谁会读这些输出：新用户、日常运维者、开发者、支持团队，还是 agent。
-- 输出出现在哪里：交互式终端、CI 日志、重定向文件、JSON 模式，还是窄窗口。
-- 用户读完以后需要做什么判断。
-- 哪些状态最重要：成功、失败、进度、空状态、警告，还是汇总。
-
-## 这个 Skill 能帮你改善什么
-
-- **状态更清楚：** 让运行中、通过、失败、警告、跳过、已变更、未变更这些状态更容易扫读。
-- **进度更可信：** 长任务要有反馈，但不要假进度、卡在 99%，或留下没有结束状态的 spinner。
-- **错误更有帮助：** 说明发生了什么、为什么重要、下一步该做什么。
-- **布局更好读：** 整理表格、摘要、检查清单、日志、diff 和结果区块。
-- **视觉更克制：** 颜色和符号只表达含义，不做装饰。
-- **更方便复制：** 命令、URL、路径和 ID 不要被随意换行或打断。
-- **更适合自动化：** 让 `--json`、管道和 CI 日志保持干净、稳定、可解析。
-- **更能适应环境：** 支持无颜色、纯文本、ASCII fallback 和窄屏终端。
-
-## 默认输出
-
-用于 CLI 输出设计任务时，这个 skill 可以产出：
-
-- 修改后的终端输出示例。
-- before / after 对比。
-- 成功、警告、错误、空状态的推荐文案。
-- 一套适用于整个 CLI 的状态词表。
-- 关于进度、表格、日志、摘要的设计建议。
-- 关于 `stdout`、`stderr`、`--json` 和非交互环境的处理建议。
-- 发布前检查清单。
-
-目标不是把终端做得复杂，而是让 CLI 给人的感觉更可靠：先准确，再好读，然后适合自动化，最后保持视觉上的安静和秩序。
-
-## 体验原则
-
-### 先给结果
-
-用户不应该读完一大段日志才知道命令是否成功。结果、阻塞点或当前状态应该放在最容易看到的位置。
-
-### 让失败可以行动
-
-好的错误信息不止写 `failed`。它会说清楚原因，并给出具体下一步。
-
-```text
-✗ Config file not found
-
-  Reason: the command needs a local config before it can deploy.
+  Reason: no myapp.toml in this directory
   Next:
-    mycli config init
+    myapp init
 ```
 
-### 去掉装饰后仍然完整
+**进度**——诚实，且永远抵达一个终态：
 
-颜色、符号和动画应该帮助用户更快扫读，但不能成为唯一信息来源。管道、CI 日志、读屏器、不支持颜色或 Unicode 的终端里，也应该读得懂。
+```
+# 改造前
+processing... done          （或进度条卡 99%，或 spinner 永不收尾）
 
-### 把机器输出也当成产品体验
+# 改造后
+⠙ Building…        →        ✓ Built 142 files in 4.2s
+```
 
-如果用户或 agent 会依赖 `--json`，它就应该稳定、干净、没有说明文字、spinner 或 ANSI 样式。进度和诊断信息不要污染数据流。
+**机器模式**（`mycli check --json | jq`）——stdout 只放数据；颜色、spinner、日志都走 stderr：
 
-## 适合的任务
+```
+# 改造前 —— 话术 + 样式漏进管道
+Checking… {ok:false, "Status":"FAILED"}  ✗ done
 
-适合用这个 skill：
+# 改造后 —— 纯净、稳定、可解析
+{
+  "ok": false,
+  "checks": [
+    { "name": "config", "status": "fail",
+      "next_steps": [ { "command": "myapp init", "reason": "create a config" } ] }
+  ]
+}
+```
 
-- 设计一个新命令的终端输出。
-- 检查混乱、嘈杂或难理解的 CLI 输出。
-- 改进错误信息和下一步提示。
-- 让进度反馈更真实、更完整。
-- 为 CI、脚本或 AI agent 准备输出。
-- 给一个 CLI 产品建立统一的输出风格。
+## 核心原则
 
-这个 skill 不负责设计命令名、参数结构或交互式向导流程。它关注的是用户运行命令之后，终端里应该怎样呈现结果。
+每个输出决策都用四个透镜来判断，**按优先级排序**——两者冲突时，高的赢（再漂亮的排版也
+不能正当化一个错误的状态）：
 
-## 发布前可以检查
+1. **Accurate（准确）**——只说真话。状态诚实，不伪造/不卡死进度，错误指明真正的原因。
+2. **Human-usable（人类可用）**——读者一眼看到结果、卡点和下一步。
+3. **Agent-usable（AI 可用）**——人类日志*和*机器模式都能被脚本或 AI agent 解析。
+4. **Beautiful（美观）**——平静、克制：语义化颜色、克制的符号、用留白构建结构。
 
-发布 CLI 输出前，先问：
+## 目录结构
 
-- 用户能不能在几秒内看懂结果？
-- 每个失败有没有原因和下一步？
-- 整个 CLI 是否使用同一套状态词？
-- 进度是否真实，并且最终会落到明确状态？
-- 管道输出是否干净？
-- `--json` 是否只输出有效数据？
-- 在 `NO_COLOR`、`TERM=dumb`、CI 和窄屏终端下是否仍然可读？
+```
+CLI-output-design/
+├── SKILL.md                       # 脊椎：4 透镜、操作规则、
+│                                  #   决策表、红旗、发布前 checklist
+└── references/                    # 按需加载的深入文档
+    ├── color.md                   # 语义化 ANSI-16 调色板、何时不该上色
+    ├── symbols.md                 # 字形集 + ASCII 回退、默认不用 emoji
+    ├── status-and-progress.md     # spinner、进度条、checklist、终态
+    ├── copywriting.md             # 错误 = 是什么 / 为什么 / Next；语气；人性化数值
+    ├── layout.md                  # 宽度、换行、对齐、表格、留白
+    ├── output-patterns.md         # 17 个 pattern 菜谱（见下）
+    ├── agent-readable-output.md   # AI 可读日志 + --json 契约
+    └── robustness.md              # TTY / NO_COLOR / CI 检测、退出码
+```
+
+`SKILL.md` 短小、每次都读；每个 reference 只在用到对应主题时才加载（渐进披露），所以在你
+需要深度之前，这个 skill 一直很轻。
+
+## 17 个 pattern 菜谱
+
+`output-patterns.md` 为每种形态给一份菜谱——结构、TTY 示例、以及管道/窄屏/agent 下的降级
+——分为四组：
+
+- **数据形态**——表格 · 列表 · 文件树 · 对象 / `describe` 视图 · 代码与 diff ·
+  内容块 · 分页
+- **生命周期与结局**——进度 · checklist · 诊断（带源码帧）· 结果 / 测试汇总 ·
+  dry-run / 变更预览 · 空状态
+- **流式与对话**——聊天 / agent transcript · 流式输出
+- **通知与日志**——分级日志与 verbosity 档位 · 版本 / 弃用通知
+
+## 何时使用
+
+只要你在打磨终端输出，这个 skill 就会自动触发。典型时刻：
+
+- **设计新 CLI**——从一开始就决定输出该长什么样、怎么表现。
+- **审查或打磨**现有 CLI 的输出，对照发布前 checklist。
+- **加 `--json` / 机器模式**，让脚本和 agent 能可靠依赖。
+- **修降级 bug**——颜色漏进管道、`NO_COLOR` 失效、乱码、硬编码宽度。
+- **做 agent 或聊天 CLI**，日志要同时对人和机器都好读。

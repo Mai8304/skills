@@ -1,131 +1,142 @@
 # CLI Output Design
 
-**Language / 语言:** English | [中文](./README.zh.md)
+> A Claude skill that makes any CLI's terminal output **accurate, human-usable,
+> agent-usable, and beautiful** — color, symbols, status & progress, errors, layout,
+> machine/JSON output, and graceful degradation for pipes, `NO_COLOR`, and CI.
 
-Make command-line output clear, trustworthy, and easy to act on.
+**English** · [中文](./README.zh.md)
 
-This skill helps you design, review, or improve what a CLI prints in the terminal. It focuses
-on the user's experience: they should quickly understand what happened, what changed, what is
-still running, what failed, and what to do next.
+---
 
-It is useful for product CLIs, developer tools, agents, deployment tools, test runners,
-diagnostic commands, and any terminal workflow where confusing output slows people down.
+## Why
 
-## How to Use
+Most CLIs are written one `print` at a time, and it shows: a bar stuck at 99%,
+`Error: failed` with no cause, ANSI escape codes leaking into a pipe, `--json` mixed with
+human prose, a table that shatters on a narrow terminal. The output looks improvised
+because it is.
 
-### 1. Install
+This skill hands an AI agent (or you, pairing with one) a compact, opinionated playbook
+for terminal output — distilled from how the best CLIs actually behave and from sources
+like [clig.dev](https://clig.dev) and the Heroku CLI Style Guide. The result: output that
+is **correct first, readable by a human second, parseable by a script or agent third, and
+calm to look at fourth.** It is pure guidance — no library, no dependency, no runtime.
 
-Install this directory from GitHub:
+## Quick install
+
+**With the `skills` CLI** (recommended for collections):
 
 ```bash
-python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
-  --url https://github.com/Mai8304/skills/tree/main/CLI-output-design
+npx skills add Mai8304/skills -s CLI-output-design -g -y
 ```
 
-Restart your agent environment after installation so the new capability can be discovered.
+**Manually** (works anywhere an agent reads skills):
 
-### 2. Ask for Output Design Help
-
-Use it when you are creating or improving terminal output:
-
-```text
-Use $cli-output-design to review this command output and make it easier to understand.
+```bash
+git clone https://github.com/Mai8304/skills
+cp -r skills/CLI-output-design ~/.claude/skills/cli-output-design
 ```
 
-You can also provide a screenshot, copied terminal text, or a description of the command:
+Once the folder sits under `~/.claude/skills/` (global) or your project's `.claude/skills/`,
+the agent picks it up automatically and activates it whenever you ask it to design, build,
+review, or improve CLI output.
 
-```text
-Use $cli-output-design to redesign the output for a deploy command.
-It should show progress, changed resources, failures, and the next action clearly.
+## Before / after
+
+What the guidance changes, shown in the output itself.
+
+**An error** — name the cause and the next move, don't just say `failed`:
+
 ```
+# Before
+Error: failed
 
-### 3. Share the User Situation
+# After
+✗ Config not found
 
-The best results come from a little context:
-
-- Who is reading the output: first-time users, daily operators, developers, support teams, or agents.
-- Where it appears: interactive terminal, CI log, redirected file, JSON mode, or a narrow window.
-- What the user needs to decide after reading it.
-- Which outputs are most important: success, failure, progress, empty state, warning, or summary.
-
-## What This Skill Helps With
-
-- **Clear status:** make running, passed, failed, warning, skipped, changed, and unchanged states easy to scan.
-- **Progress that feels reliable:** show long-running work without fake percentages or stuck spinners.
-- **Helpful errors:** explain what happened, why it matters, and the next action.
-- **Readable layouts:** organize tables, summaries, checklists, logs, diffs, and result blocks.
-- **Calm visual design:** use color and symbols only when they add meaning, not decoration.
-- **Copy-friendly output:** keep commands, URLs, file paths, and IDs easy to copy.
-- **Automation-friendly output:** keep `--json`, pipes, and CI logs clean and predictable.
-- **Accessible fallbacks:** support no color, plain text, ASCII-only terminals, and narrow screens.
-
-## Default Output
-
-When used on a CLI design task, the skill can produce:
-
-- A revised terminal output example.
-- A before-and-after comparison.
-- Suggested wording for success, warning, error, and empty states.
-- A compact status vocabulary for the whole CLI.
-- Guidance for progress indicators, tables, logs, and summaries.
-- Recommendations for `stdout`, `stderr`, `--json`, and non-interactive environments.
-- A pre-ship checklist for checking the output before release.
-
-The goal is not to make the terminal look fancy. The goal is to make the CLI feel dependable:
-accurate first, easy to read second, automation-friendly third, and visually calm throughout.
-
-## Experience Principles
-
-### Lead with the result
-
-Users should not have to read a wall of logs to know whether the command worked. Put the
-result, blocker, or current state where it can be seen immediately.
-
-### Make failure actionable
-
-Good errors do not stop at "failed." They name the cause and give a concrete next step.
-
-```text
-✗ Config file not found
-
-  Reason: the command needs a local config before it can deploy.
+  Reason: no myapp.toml in this directory
   Next:
-    mycli config init
+    myapp init
 ```
 
-### Keep output useful without decoration
+**Progress** — honest, and it always reaches a terminal state:
 
-Color, symbols, and animation should help people scan faster, but the same information must
-still be available without them. This matters in pipes, CI logs, screen readers, and terminals
-that do not support color or Unicode.
+```
+# Before
+processing... done          (or a bar stuck at 99%, or a spinner that never resolves)
 
-### Treat machine output as a product surface
+# After
+⠙ Building…        →        ✓ Built 142 files in 4.2s
+```
 
-If users or agents rely on `--json`, keep it stable, clean, and free of prose, spinners, and
-ANSI styling. Human progress and diagnostics should not pollute data streams.
+**Machine mode** (`mycli check --json | jq`) — stdout carries only data; color, spinners,
+and logs move to stderr:
 
-## Good Fit
+```
+# Before  — prose + styling leak into the pipe
+Checking… {ok:false, "Status":"FAILED"}  ✗ done
 
-Use this skill for:
+# After   — pure, stable, parseable
+{
+  "ok": false,
+  "checks": [
+    { "name": "config", "status": "fail",
+      "next_steps": [ { "command": "myapp init", "reason": "create a config" } ] }
+  ]
+}
+```
 
-- Designing the first version of a command's output.
-- Reviewing confusing or noisy CLI output.
-- Improving error messages and next-step guidance.
-- Making progress indicators honest and complete.
-- Preparing output for CI, scripts, or AI agents.
-- Creating a consistent style across a CLI product.
+## Core principles
 
-This skill is not about choosing command names, flags, or interactive wizard flows. It focuses
-on what the command prints after the user runs it.
+Every output decision is judged through four lenses, **in priority order** — when two
+conflict, the higher one wins (a prettier layout never justifies a wrong status):
 
-## Pre-Ship Questions
+1. **Accurate** — say only true things. Honest status, no fake or stuck progress, errors
+   name the real cause.
+2. **Human-usable** — the reader sees the result, the blocker, and the next step at a glance.
+3. **Agent-usable** — the human log *and* the machine mode are parseable by a script or AI
+   agent.
+4. **Beautiful** — calm and intentional: semantic color, restrained symbols, whitespace as
+   structure.
 
-Before shipping CLI output, check:
+## What's inside
 
-- Can a user tell the result in a few seconds?
-- Does every failure include a cause and a next action?
-- Is the same status vocabulary used everywhere?
-- Are progress indicators honest and resolved to a final state?
-- Does piped output stay clean?
-- Is `--json` valid data only?
-- Does the output still work with `NO_COLOR`, `TERM=dumb`, CI, and narrow terminals?
+```
+CLI-output-design/
+├── SKILL.md                       # the spine: 4 lenses, operating rules,
+│                                  #   decision table, red flags, pre-ship checklist
+└── references/                    # load-on-demand deep dives
+    ├── color.md                   # semantic ANSI-16 palette, when not to color
+    ├── symbols.md                 # glyph set + ASCII fallback, no-emoji stance
+    ├── status-and-progress.md     # spinners, bars, checklists, terminal states
+    ├── copywriting.md             # error = what / why / Next; voice; humanized values
+    ├── layout.md                  # width, wrapping, alignment, tables, whitespace
+    ├── output-patterns.md         # the 17-pattern cookbook (below)
+    ├── agent-readable-output.md   # AI-readable logs + the --json contract
+    └── robustness.md              # TTY / NO_COLOR / CI detection, exit codes
+```
+
+`SKILL.md` is short and always read; each reference loads only when its topic is in play
+(progressive disclosure), so the skill stays cheap until you need the depth.
+
+## The pattern cookbook
+
+`output-patterns.md` is one recipe per shape — structure, a TTY example, and the
+piped/narrow/agent degradation — in four groups:
+
+- **Data shapes** — tables · lists · file trees · object / `describe` views · code & diffs ·
+  content blocks · pagination
+- **Lifecycle & outcomes** — progress · checklists · diagnostics (with source frames) ·
+  result / test summaries · dry-run / change previews · empty states
+- **Streaming & conversation** — chat / agent transcripts · streaming output
+- **Notices & logs** — leveled logs & verbosity tiers · version / deprecation notices
+
+## When to use it
+
+The skill activates on its own whenever you're shaping terminal output. Typical moments:
+
+- **Designing a new CLI** — deciding how output should look and behave from the start.
+- **Reviewing or polishing** an existing CLI's output, against the pre-ship checklist.
+- **Adding `--json` / machine mode** that scripts and agents can rely on.
+- **Fixing degradation bugs** — color leaking into pipes, broken `NO_COLOR`, mojibake,
+  hardcoded width.
+- **Building an agent or chat CLI** where logs must read well for both humans and machines.
