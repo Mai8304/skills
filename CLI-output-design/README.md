@@ -40,11 +40,34 @@ Once the folder sits under `~/.claude/skills/` (global) or your project's `.clau
 the agent picks it up automatically and activates it whenever you ask it to design, build,
 review, or improve CLI output.
 
+## How it works
+
+Behind "make it look good," the skill hands the agent a concrete system for **each layer of
+output** — so a download, a file listing, a chat turn, and an error all come out of one
+coherent design instead of ad-hoc `print`s. Every decision is weighed through four lenses
+(accurate → human-usable → agent-usable → beautiful, detailed below) and delivered through
+seven systems:
+
+| System | What it gives the agent |
+|---|---|
+| **Semantic color** | Color = meaning, never decoration: green = success, red = error, yellow = warn, cyan = command/path, dim = secondary. ANSI-16 so it follows the user's light/dark theme, always paired with text, and auto-off in pipes / `NO_COLOR` / CI. |
+| **A fixed symbol set** | One vocabulary — `✓ ✗ ⚠ → • ◆ …` plus a braille spinner `⠙` — each with an ASCII fallback (`[OK] [FAIL] [WARN]`). No emoji by default; width-stable so columns never break. |
+| **Honest status & progress** | Every long task runs start → progress → `✓`/`✗`; downloads show bar + size + rate + ETA; spinners appear only on a TTY and always resolve. No bar stuck at 99%. |
+| **Copy that guides** | Errors state *what happened · why · what to do next*; one status vocabulary (`pass / fail / warn / skip …`); humanized durations and sizes (`1.2 MB`, `4.2s`). |
+| **Width-aware layout** | Tables, file trees, lists, and key-value blocks that align, wrap, and fall back gracefully on a narrow terminal; identifiers and URLs are never wrapped. |
+| **A machine & agent contract** | `stdout` = data, `stderr` = conversation; `--json` is pure, stable, and parseable; status words stay stable so an AI agent can read the next action straight from the logs. |
+| **17 ready-made patterns** | Recipes for every shape you actually render — downloads, trees, conversations, diffs, tables, diagnostics, logs, dry-runs, empty states… (see the cookbook below). |
+
+The agent always reads the short `SKILL.md` spine, then pulls in only the reference for what
+it's rendering — so each scenario gets the right treatment without loading the whole book.
+
 ## Before / after
 
-What the guidance changes, shown in the output itself.
+The same information, rendered ad-hoc vs. through the skill. The `diff`-highlighted blocks
+are **actually colored on GitHub** (green = success, red = error/removed); elsewhere the
+symbols and structure stand in for color (yellow = warn, cyan = command/path, dim = secondary).
 
-**An error** — name the cause and the next move, don't just say `failed`:
+**Error & guidance** — name the cause and the next move:
 
 ```
 # Before
@@ -58,24 +81,95 @@ Error: failed
     myapp init
 ```
 
-**Progress** — honest, and it always reaches a terminal state:
+**Download** — honest progress that resolves, and degrades when piped:
 
 ```
 # Before
-processing... done          (or a bar stuck at 99%, or a spinner that never resolves)
+Downloading... done.
+
+# After — interactive
+⬇ model.bin   [██████████░░░░]  72%   3.6/5.0 GB   18 MB/s   eta 1m20s
+✓ Downloaded model.bin (5.0 GB) in 4m41s
+
+# After — piped / CI (no animation, just milestones)
+downloading model.bin (5.0 GB)
+downloaded model.bin in 4m41s
+```
+
+**File listing → tree** — structure you can scan:
+
+```
+# Before
+src/cli/main.go
+src/cli/render.go
+src/internal/color.go
 
 # After
-⠙ Building…        →        ✓ Built 142 files in 4.2s
+.
+├── src/
+│   ├── cli/
+│   │   ├── main.go
+│   │   └── render.go
+│   └── internal/
+│       └── color.go
+└── README.md
 ```
 
-**Machine mode** (`mycli check --json | jq`) — stdout carries only data; color, spinners,
-and logs move to stderr:
+**Health check** — symbols + alignment + a summary line (green/red real below):
+
+```diff
+  ◆ Checking environment
+
++ ✓ Node version     v24.11.1
++ ✓ Lockfile         in sync
+  ⚠ Disk space       2.1 GB free
+- ✗ Auth token       missing
+
+  3 passed · 1 warning · 1 failed
+```
+
+**Conversation** (agent / chat CLI) — turns you can tell apart:
 
 ```
-# Before  — prose + styling leak into the pipe
-Checking… {ok:false, "Status":"FAILED"}  ✗ done
+# Before
+You: how do I reset the cache?
+Bot: Run mycli cache clear.
 
-# After   — pure, stable, parseable
+# After
+▌ You
+  How do I reset the cache?
+
+▌ Assistant
+  Run `mycli cache clear`.
+```
+
+**Table** — borderless, aligned, grep-friendly:
+
+```
+# Before — ASCII grid: noisy, brittle on resize
++--------+--------------------+--------+
+| NUMBER | TITLE              | STATE  |
++--------+--------------------+--------+
+| 128    | Fix color fallback | open   |
++--------+--------------------+--------+
+
+# After
+NUMBER  TITLE                STATE   UPDATED
+#128    Fix color fallback   open    2h ago
+#127    Bump deps            merged  1d ago
+```
+
+**Code & diffs** — `+`/`-` carry the meaning, color reinforces (real colors below):
+
+```diff
+@@ src/config.go @@
+- log.Print("start")
++ log.Info("start", "version", v)
+```
+
+**Machine mode** (`mycli check --json | jq`) — pure data on stdout; progress moved to stderr:
+
+```json
 {
   "ok": false,
   "checks": [

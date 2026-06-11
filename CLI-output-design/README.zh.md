@@ -36,11 +36,32 @@ cp -r skills/CLI-output-design ~/.claude/skills/cli-output-design
 放到 `~/.claude/skills/`（全局）或项目的 `.claude/skills/` 下后，agent 会自动加载，并在你
 让它设计、构建、审查或改进 CLI 输出时自动触发。
 
+## 它是怎么做到的
+
+在“把它弄好看”背后，这个 skill 为**输出的每一层**都给了 agent 一套具体的系统——所以下载、
+文件列表、一轮对话、一条错误，都出自同一套连贯设计，而不是临时拼的 `print`。每个决策都用
+四个透镜来权衡（准确 → 人类可用 → AI 可用 → 美观，详见下文），并由七套系统落地：
+
+| 系统 | 给 agent 的能力 |
+|---|---|
+| **语义化颜色** | 颜色 = 含义，不是装饰：绿 = 成功，红 = 错误，黄 = 警告，青 = 命令/路径，dim = 次要。用 ANSI-16 跟随用户的亮/暗主题，永远与文字配对，并在管道 / `NO_COLOR` / CI 下自动关闭。 |
+| **固定符号集** | 一套词汇——`✓ ✗ ⚠ → • ◆ …` 加 braille spinner `⠙`——每个都有 ASCII 回退（`[OK] [FAIL] [WARN]`）。默认不用 emoji；宽度稳定，列永不错位。 |
+| **诚实的状态与进度** | 每个耗时任务都走 开始 → 进度 → `✓`/`✗`；下载显示 条 + 体积 + 速率 + ETA；spinner 只在 TTY 出现且必定收尾。绝不卡在 99%。 |
+| **会引导的文案** | 错误说清*发生了什么 · 为什么 · 下一步做什么*；统一状态词表（`pass / fail / warn / skip …`）；人性化的时长与体积（`1.2 MB`、`4.2s`）。 |
+| **宽度感知排版** | 表格、文件树、列表、键值块会对齐、换行，并在窄终端优雅降级；标识符和 URL 永不被折断。 |
+| **机器与 agent 契约** | `stdout` = 数据，`stderr` = 对话；`--json` 纯净、稳定、可解析；状态词稳定，AI agent 能直接从日志读出下一步动作。 |
+| **17 个现成 pattern** | 覆盖你真正要渲染的每种形态——下载、文件树、对话、diff、表格、诊断、日志、dry-run、空状态……（见下方菜谱）。 |
+
+agent 永远先读简短的 `SKILL.md` 脊椎，再只按需拉取当前要渲染那一项的 reference——所以每个
+场景都得到正确处理，又不必加载整本书。
+
 ## 改造前 / 改造后
 
-指南带来的改变，直接体现在输出本身。
+同样的信息，临时拼 vs. 经过 skill。下面用 `diff` 高亮的块在 GitHub 上**真的有红绿色**
+（绿 = 成功，红 = 错误/删除）；其余地方用符号和结构代替颜色（黄 = 警告，青 = 命令/路径，
+dim = 次要）。
 
-**错误**——说清原因和下一步，别只甩一句 `failed`：
+**错误与引导**——说清原因和下一步：
 
 ```
 # 改造前
@@ -54,23 +75,95 @@ Error: failed
     myapp init
 ```
 
-**进度**——诚实，且永远抵达一个终态：
+**下载**——诚实的进度，必定收尾，管道下自动降级：
 
 ```
 # 改造前
-processing... done          （或进度条卡 99%，或 spinner 永不收尾）
+Downloading... done.
+
+# 改造后 —— 交互式
+⬇ model.bin   [██████████░░░░]  72%   3.6/5.0 GB   18 MB/s   eta 1m20s
+✓ Downloaded model.bin (5.0 GB) in 4m41s
+
+# 改造后 —— 管道 / CI（无动画，只给里程碑）
+downloading model.bin (5.0 GB)
+downloaded model.bin in 4m41s
+```
+
+**文件列表 → 树**——能扫的结构：
+
+```
+# 改造前
+src/cli/main.go
+src/cli/render.go
+src/internal/color.go
 
 # 改造后
-⠙ Building…        →        ✓ Built 142 files in 4.2s
+.
+├── src/
+│   ├── cli/
+│   │   ├── main.go
+│   │   └── render.go
+│   └── internal/
+│       └── color.go
+└── README.md
 ```
 
-**机器模式**（`mycli check --json | jq`）——stdout 只放数据；颜色、spinner、日志都走 stderr：
+**健康检查**——符号 + 对齐 + 汇总行（下方真红绿）：
+
+```diff
+  ◆ Checking environment
+
++ ✓ Node version     v24.11.1
++ ✓ Lockfile         in sync
+  ⚠ Disk space       2.1 GB free
+- ✗ Auth token       missing
+
+  3 passed · 1 warning · 1 failed
+```
+
+**对话**（agent / 聊天 CLI）——分得清的轮次：
 
 ```
-# 改造前 —— 话术 + 样式漏进管道
-Checking… {ok:false, "Status":"FAILED"}  ✗ done
+# 改造前
+You: how do I reset the cache?
+Bot: Run mycli cache clear.
 
-# 改造后 —— 纯净、稳定、可解析
+# 改造后
+▌ You
+  How do I reset the cache?
+
+▌ Assistant
+  Run `mycli cache clear`.
+```
+
+**表格**——无边框、对齐、grep 友好：
+
+```
+# 改造前 —— ASCII 网格：噪声大、resize 易碎
++--------+--------------------+--------+
+| NUMBER | TITLE              | STATE  |
++--------+--------------------+--------+
+| 128    | Fix color fallback | open   |
++--------+--------------------+--------+
+
+# 改造后
+NUMBER  TITLE                STATE   UPDATED
+#128    Fix color fallback   open    2h ago
+#127    Bump deps            merged  1d ago
+```
+
+**代码与 diff**——`+`/`-` 承载语义，颜色只是补强（下方真配色）：
+
+```diff
+@@ src/config.go @@
+- log.Print("start")
++ log.Info("start", "version", v)
+```
+
+**机器模式**（`mycli check --json | jq`）——stdout 只放数据；进度移到 stderr：
+
+```json
 {
   "ok": false,
   "checks": [
