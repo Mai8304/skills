@@ -11,6 +11,15 @@ colors — and it stays **redundant with text or a symbol**, so the output still
 pipe, on a monochrome terminal, or for a colorblind reader. The eye is drawn to color, so
 treat it as a spotlight: if everything is colored, nothing stands out.
 
+Color works on **two independent channels** — keep them separate. **Hue** says *what kind of
+thing* this is (green pass · red fail · yellow warn · cyan accent for commands / paths / URLs
+/ flags); **intensity** says *how much it should grab the eye* within any hue — **bold** to
+promote, default as baseline, **dim** to demote. They compose: a **bold-red** headline is the
+one error among several red tokens; a **dim-cyan** path is a secondary command; a
+**bold-default** heading carries no state at all. Pick a hue for the meaning and an intensity
+for the emphasis, separately — and since either can vanish (piped, monochrome, a terminal
+with no bold), neither may be the *only* carrier of a state.
+
 Use the **ANSI-16 named colors, not hardcoded hex/truecolor.** Named colors follow the
 user's terminal theme (light or dark); a hardcoded `#ff0000` can turn unreadable against
 their background. Reach for truecolor only when genuinely necessary and theme-aware.
@@ -19,11 +28,15 @@ their background. Reach for truecolor only when genuinely necessary and theme-aw
 
 **Do**
 
-- Map color to meaning from the palette below, and pair every colored token with text or a
+- Map color to meaning from the hue table below, and pair every colored token with text or a
   symbol — color *accelerates* reading, it never *carries* the only copy of the meaning.
-- Use `dim`/gray to demote secondary information (timestamps, hints, metadata, `unchanged`).
-  This builds hierarchy without adding color noise.
-- Use `bold` for headings, key labels, and the single number that matters.
+- Use `dim`/gray to demote secondary information (timestamps, hints, metadata, `unchanged`),
+  building hierarchy without color noise. But `dim` (faint) is the **weakest** signal — many
+  terminals render it like default — so never let it *alone* mark a distinction that matters.
+- Use `bold` to promote — headings, key labels, and the **single outcome-determining
+  number** (the failure count, or the total when all pass), not every number. Like color,
+  bold is **sparing** (if everything is bold, nothing is) and **redundant** (a terminal may
+  render it as bright color, or drop it).
 - In an error block, color the **headline** red — leave the body default so the one line
   that matters stays findable.
 - Give commands, paths, URLs, and flags one accent color (cyan), distinct from status colors.
@@ -58,17 +71,27 @@ Color + symbol + text all carry "logged in," so the line still reads on a monoch
 
 ## Cheat-sheet
 
-Palette — ANSI-16 named, semantic only:
+Hue — ANSI-16 named, semantic *state* (always one of three redundant signals):
 
-| Color | Meaning |
+| Hue | Meaning |
 |---|---|
 | green | pass / success / added |
 | red | fail / error / removed — **headline only**, not the whole block |
 | yellow | warn / attention / changed |
 | cyan | accent: command, path, URL, flag, selected item |
-| dim / gray | secondary metadata, hints, timestamps, `unchanged` |
-| bold | headings, key labels, the number that matters |
 | (default) | body text and ordinary output — most of the screen |
+
+Emphasis — intensity, **orthogonal to hue**; carries hierarchy, not state:
+
+| Weight | Use | Caveat |
+|---|---|---|
+| bold | promote: heading, key label, the one outcome-determining number | may render as bright color or be dropped — keep it sparing & redundant |
+| (default) | baseline — the bulk of output | — |
+| dim / gray | demote: timestamps, hints, metadata, `unchanged` | weakest signal; never the sole mark of a distinction that matters |
+
+Other SGR attributes — avoid by default: reserve **underline** for the OSC-8 hyperlink-text
+fallback and **reverse** for a selected row; skip **italic** (it competes with `dim` and
+degrades unevenly).
 
 **Turn color off** when any of these hold (mechanics in `robustness.md`): `NO_COLOR` is set,
 `--no-color` is passed, `TERM=dumb`, stdout is not a TTY (piped or redirected), or the output

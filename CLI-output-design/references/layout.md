@@ -27,7 +27,27 @@ the things a user needs to copy.
 - Hardcode 80 columns, or fill output to the very last column (ugly reflow on resize).
 - Draw full `+----+` ASCII grids or boxes (noisy; break on resize/copy).
 - Wrap an identifier, path, URL, or command mid-token.
-- Pad trailing whitespace; end output with exactly one newline.
+- Leave trailing whitespace, or pad piped / simple output with leading or trailing blank
+  lines (block edges are TTY-only — see Vertical rhythm & edges).
+
+## Vertical rhythm & edges
+
+Blank lines encode **grouping distance** — spend them as signal, not filler:
+
+- **0 blank lines** — same group: checklist rows, key-value rows, a tight list.
+- **1 blank line** — related but distinct sections; also **before a summary / verdict line**
+  (the summary is its own section).
+- **2+ blank lines** — reads as a hard "new topic" break; avoid inside one command's output,
+  and never emit more than one consecutive blank line.
+
+A leading or trailing blank line is **decoration**, so the block's edges are
+channel-dependent:
+
+- **Data / simple / piped output** — no leading blank; end with exactly one `\n`. A blank
+  line in a pipe is data pollution.
+- **Interactive multi-section "ceremony" output** (installers, doctor checks, wizards) — one
+  leading + one trailing blank, so the block reads as a card set off from the shell prompt.
+  **TTY only** — strip it when piped or `--json` (cross-link `robustness.md`).
 
 ## Tables vs key-value
 
@@ -69,6 +89,31 @@ A doctor-style block and its narrow-terminal fallback:
       not configured
 ```
 
+## Alignment
+
+Align on the **edge the eye compares**, and keep the gap between columns constant:
+
+- **Text / labels → left** — you scan down the start of words.
+- **Pure numbers → right**, aligned on the decimal point — you compare place value.
+- **Mixed-unit values** (`1.2s`, `3m 04s`, `2h`; `1.2 MB`, `940 KB`) **→ right edge.** There's
+  no decimal to align, so stack the right edge and magnitudes still line up — don't force a
+  decimal alignment that doesn't exist (humanized values in `copywriting.md`).
+- **Columns are separated by ≥ 2 spaces, constant down the whole block.** A single or ragged
+  gap is the main reason output "looks misaligned."
+
+Two label shapes look alike but align differently:
+
+- **Aligned label column** (describe / checklist) — label left, **no colon**, value column
+  starts at `max(label width) + 2`; the alignment already does what a colon would.
+- **Inline prefix label** (`Next:` · `Reason:` · `note:`) — colon-terminated, introduces a
+  block; **not** part of any column, so it isn't padded.
+
+When a value is too long, **hang it under the value column** if that column is wide enough to
+keep; **drop it to its own indented line** only when the terminal is too narrow for a stable
+column (the narrow doctor-block fallback above). Align value columns **locally within a
+section** — don't force one global column across unrelated blocks (it balloons the gap and
+ties unrelated content together).
+
 ## Measure display width, not character count
 
 Alignment, padding, and truncation must be computed in **display columns**, not bytes or
@@ -95,12 +140,14 @@ Use a width-aware function (`wcwidth` / east-asian-width) for column padding and
 ## Cheat-sheet
 
 - **Indent** child detail by 2 spaces per level; keep nesting shallow.
-- **Spacing:** one blank line between sections; none inside a tight list.
+- **Spacing:** one blank between sections (& before a summary), none in a tight list, never
+  2+; block edges (leading/trailing blank) are TTY-only.
 - **Width:** detect at runtime; wrap prose, cap ~100; never wrap identifiers/paths/URLs.
 - **Display width:** pad/align/truncate by display columns (CJK & emoji = 2), not char count.
 - **Tables:** borderless, homogeneous data only, numbers right-aligned, narrow fallback.
 - **Truncate** with `…`, keeping it meaningful — paths in the middle: `src/…/main.go`.
-- Numeric columns: right-align, align decimal points (values themselves in `copywriting.md`).
+- **Align:** on the compared edge — labels left, pure numbers on the decimal, mixed units on
+  the right edge; columns ≥ 2 spaces apart, constant. See Alignment.
 
 Cross-links: `output-patterns.md` for full table/tree/list recipes, `robustness.md` for
 width detection, `symbols.md` for `◆`/`…`.

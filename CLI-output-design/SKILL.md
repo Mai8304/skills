@@ -73,6 +73,7 @@ Stop if you're about to:
 - mix `ok` / `done` / `success` / `passed` for one status
 - use emoji as default decoration
 - put diagnostics or notices on stdout, polluting piped data
+- emit decorative leading / trailing blank lines into piped / `--json` output (block edges are TTY-only)
 - align columns by character/byte count instead of display width (breaks on CJK/emoji)
 - run a destructive action without previewing what it affects or defaulting to "No"
 - block on stdin to prompt when there's no TTY (deadlocks CI, pipes, and agents)
@@ -81,6 +82,7 @@ Stop if you're about to:
 
 - [ ] Piped output (`| cat`) is clean — no spinners, no raw escape codes
 - [ ] `--json` / machine mode is pure data on stdout — no ANSI, no prose, stable field names
+- [ ] Leading/trailing blank lines appear only in interactive TTY output — piped/`--json` has none, and output ends with exactly one newline
 - [ ] `NO_COLOR=1` and `TERM=dumb` still produce readable, complete output
 - [ ] Narrow terminal (~40 cols) wraps/truncates without breaking layout
 - [ ] ASCII fallback renders when Unicode is unavailable
