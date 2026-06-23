@@ -69,7 +69,7 @@ channels explicit:
 | user draft, cursor, selection | live TUI only | omitted | omitted |
 | thinking / tool progress / notices | stderr or redraw region | stderr milestone lines | event objects on stdout if in the JSON stream |
 | final assistant answer | transcript lane; `--print` may also use stdout | stdout only when the command's contract is "print the answer" | `message.delta` / `turn.end` events |
-| tool stdout/stderr preview | child detail block with bounded preview | stderr unless it is the command's explicit data result | bounded fields or referenced artifact IDs |
+| tool stdout/stderr preview | `│` continuation detail block with bounded preview | stderr unless it is the command's explicit data result | bounded fields or referenced artifact IDs |
 | artifacts / data result | file path or stdout per command contract | stdout or file, never mixed with progress | JSON fields / artifact references |
 
 If stdout is reserved for a data result or machine events, route conversation and progress to
@@ -191,7 +191,7 @@ Rules:
   `symbols.md` remain valid for ordinary progress.
 - Use `thinking`, `planning`, `waiting`, or `streaming` only when those states are true.
 - Collapse long internal activity into bounded visible thinking blocks. Keep them readable,
-  wrap by display width, and avoid `⎿` child-result styling for thinking prose.
+  wrap by display width, and use `│` continuation lines consistently.
 - Do not reveal hidden chain-of-thought. Show summaries, plans, and observable actions.
 - Off-TTY, use discrete events: `thinking: started`, `thinking: inspected 4 files`,
   `thinking: pass`.
@@ -201,22 +201,21 @@ Rules:
 Tool use has a start, optional details, a terminal state, and a bounded result preview.
 
 ```text
-◐ ⚙ read_file  running
-  ⎿ path: src/cache.go
-
-✓ ⚙ read_file  pass  42ms
-  ⎿ 184 lines
+✓ ⚙ bash  pass
+  │ args: curl -s "wttr.in/Beijing?T"
+  │ result: pass · 6.5 KB
+  │ output: Beijing weather preview...
 ```
 
 Rules:
 
 - `⚙ name` marks tool use; the tool name is a technical token, usually cyan in a TTY.
-- Arguments/results use child detail atoms (`⎿`) with stable labels: `path`, `args`,
+- Arguments/results use `│` continuation detail lines with stable labels: `path`, `args`,
   `stdout`, `stderr`, `result`, `exit`, `duration`.
 - Show bounded previews for large output and a clear truncation count.
 - Terminal state replaces the spinner: `✓ pass`, `✗ fail`, `⚠ warn`, `⊘ skip`.
 - Do not stream raw command output into the same visual lane as assistant prose. Keep a
-  child block or collapsible region so the transcript remains scannable.
+  `│` continuation detail block or collapsible region so the transcript remains scannable.
 - Tool calls that mutate state should surface preview/approval atoms before execution when
   the product contract requires it.
 
@@ -285,10 +284,10 @@ inline by default.
 
 ```text
 ◐ agent researcher  running
-  ⎿ task: inspect parser edge cases
+  │ task: inspect parser edge cases
 
 ✓ agent researcher  pass  1m12s
-  ⎿ found 3 relevant files
+  │ result: found 3 relevant files
 ```
 
 Rules:
@@ -317,11 +316,11 @@ Tool call with bounded preview:
 
 ```text
 ◐ ⚙ shell  running
-  ⎿ command: go test ./internal/cache
+  │ command: go test ./internal/cache
 
 ✗ ⚙ shell  fail  2.3s
-  ⎿ exit: 1
-  ⎿ cache_test.go:88: expected 0 entries, got 1
+  │ exit: 1
+  │ output: cache_test.go:88: expected 0 entries, got 1
 ```
 
 Background handoff:
@@ -408,11 +407,11 @@ Good:
 
 ```text
 ◐ ⚙ shell  running
-  ⎿ command: go test ./internal/cache
+  │ command: go test ./internal/cache
 
 ✗ ⚙ shell  fail  2.3s
-  ⎿ exit: 1
-  ⎿ output: cache_test.go:88: expected 0 entries, got 1
+  │ exit: 1
+  │ output: cache_test.go:88: expected 0 entries, got 1
 ```
 
 Bad:
