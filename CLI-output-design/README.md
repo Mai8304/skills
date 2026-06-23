@@ -85,7 +85,7 @@ Error: failed
 
 **After**
 
-![After: Errors That Guide](./assets/readme-after/ordinary-errors-after.png)
+![After: Errors That Guide](./assets/readme-after/ordinary-errors-after.png?v=readable-20260623)
 
 ### 2. Semantic Color, Progress, and Result State
 
@@ -102,7 +102,7 @@ Ran tests. Some failed. Lots of log output...
 
 **After**
 
-![After: Semantic Color, Progress, and Result State](./assets/readme-after/ordinary-progress-after.png)
+![After: Semantic Color, Progress, and Result State](./assets/readme-after/ordinary-progress-after.png?v=readable-20260623)
 
 ### 3. Data Shapes and Diagnostics
 
@@ -126,7 +126,7 @@ line 14 print(cfg) used after move
 
 **After**
 
-![After: Data Shapes and Diagnostics](./assets/readme-after/ordinary-data-after.png)
+![After: Data Shapes and Diagnostics](./assets/readme-after/ordinary-data-after.png?v=readable-20260623)
 
 ### 4. Runtime Contracts and Redaction
 
@@ -160,7 +160,7 @@ connected with token sk-live-123456
 
 **After**
 
-![After: Runtime Contracts and Redaction](./assets/readme-after/ordinary-runtime-after.png)
+![After: Runtime Contracts and Redaction](./assets/readme-after/ordinary-runtime-after.png?v=readable-20260623)
 
 ### More Ordinary CLI Cases
 
@@ -170,7 +170,7 @@ blocks, nested tasks, diagnostics, summaries, dry-run previews, empty states, lo
 expressive notices, prompts, machine mode, CJK width, pager behavior, deprecations,
 interruption, theme adaptation, and redaction.
 
-![Ordinary CLI Before / After](./assets/ordinary-cli-before-after.png)
+![Ordinary CLI Before / After](./assets/ordinary-cli-before-after.png?v=readable-20260623)
 
 ## Before / after: Agent Chat TUI
 
@@ -194,7 +194,7 @@ You: explain this error and suggest the smallest fix
 
 **After**
 
-![After: Transcript roles and input composer](./assets/readme-after/agent-transcript-after.png)
+![After: Transcript roles and input composer](./assets/readme-after/agent-transcript-after.png?v=readable-20260623)
 
 The live draft is not transcript history. Cursor movement, deletion, suggestions, and IME
 composition are input UI until the user submits.
@@ -213,7 +213,7 @@ raw output mixed into assistant prose
 
 **After**
 
-![After: Thinking and Tool Use](./assets/readme-after/agent-tool-after.png)
+![After: Thinking and Tool Use](./assets/readme-after/agent-tool-after.png?v=readable-20260623)
 
 Never expose hidden chain-of-thought. Show concise observable summaries and bounded tool
 results with terminal state.
@@ -236,7 +236,7 @@ LATER task sync-42 queued
 
 **After**
 
-![After: Approvals, Background Work, and Artifacts](./assets/readme-after/agent-approval-after.png)
+![After: Approvals, Background Work, and Artifacts](./assets/readme-after/agent-approval-after.png?v=readable-20260623)
 
 Approvals are decision atoms. Large artifacts get summaries and stable references, not full
 data dumps in the transcript.
@@ -257,7 +257,7 @@ Partial assistant prose...
 
 **After**
 
-![After: Non-TTY and NDJSON Event Mode](./assets/readme-after/agent-events-after.png)
+![After: Non-TTY and NDJSON Event Mode](./assets/readme-after/agent-events-after.png?v=readable-20260623)
 
 Off-TTY output removes live UI, cursor tricks, frames, animation, hidden role state, and
 raw ANSI. Machine streams use stable event types.
@@ -270,7 +270,7 @@ results, choices, approvals, alerts, timers, background tasks, subagents, theme 
 suggestions, file mentions, cancellation, approval outcomes, artifacts, plain non-TTY
 fallback, and NDJSON event mode.
 
-![Agent Chat TUI Before / After](./assets/agent-chat-tui-before-after.png)
+![Agent Chat TUI Before / After](./assets/agent-chat-tui-before-after.png?v=readable-20260623)
 
 ## Skill contents
 

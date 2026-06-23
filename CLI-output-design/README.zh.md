@@ -75,7 +75,7 @@ Error: failed
 
 **改造后**
 
-![After: Errors That Guide](./assets/readme-after/ordinary-errors-after.png)
+![After: Errors That Guide](./assets/readme-after/ordinary-errors-after.png?v=readable-20260623)
 
 错误不是“红一点”就够了；它必须说清楚原因、上下文和下一步。
 
@@ -94,7 +94,7 @@ Ran tests. Some failed. Lots of log output...
 
 **改造后**
 
-![After: Semantic Color, Progress, and Result State](./assets/readme-after/ordinary-progress-after.png)
+![After: Semantic Color, Progress, and Result State](./assets/readme-after/ordinary-progress-after.png?v=readable-20260623)
 
 红色给当前失败，绿色给通过，黄色给风险，青色给技术 token。进度必须诚实，并且必须落到终态。
 
@@ -120,7 +120,7 @@ line 14 print(cfg) used after move
 
 **改造后**
 
-![After: Data Shapes and Diagnostics](./assets/readme-after/ordinary-data-after.png)
+![After: Data Shapes and Diagnostics](./assets/readme-after/ordinary-data-after.png?v=readable-20260623)
 
 同质数据用表格，单个对象用 key-value，诊断要能被人和工具同时读取。
 
@@ -156,7 +156,7 @@ connected with token sk-live-123456
 
 **改造后**
 
-![After: Runtime Contracts and Redaction](./assets/readme-after/ordinary-runtime-after.png)
+![After: Runtime Contracts and Redaction](./assets/readme-after/ordinary-runtime-after.png?v=readable-20260623)
 
 机器模式是契约，不能混进 ANSI、spinner、提示性 prose 或不稳定字段；secret 必须先 redaction。
 
@@ -164,7 +164,7 @@ connected with token sk-live-123456
 
 完整 1024px 图覆盖 24 个普通 CLI 输出原子：help、bad arguments、error、技术 token、进度、表格、对象详情、文件树、diff、内容块、嵌套任务、诊断、结果汇总、dry-run、空状态、日志、expressive notice、prompt、machine mode、CJK 宽度、pager、deprecation、中断、主题适配和 redaction。
 
-![Ordinary CLI Before / After](./assets/ordinary-cli-before-after.png)
+![Ordinary CLI Before / After](./assets/ordinary-cli-before-after.png?v=readable-20260623)
 
 ## Agent Chat TUI：改造前 / 改造后
 
@@ -185,7 +185,7 @@ You: explain this error and suggest the smallest fix
 
 **改造后**
 
-![After: Transcript roles and input composer](./assets/readme-after/agent-transcript-after.png)
+![After: Transcript roles and input composer](./assets/readme-after/agent-transcript-after.png?v=readable-20260623)
 
 输入草稿是 live UI，不是历史记录。光标移动、删除、候选项、IME 组合态都不能污染 transcript。
 
@@ -203,7 +203,7 @@ raw output mixed into assistant prose
 
 **改造后**
 
-![After: Thinking and Tool Use](./assets/readme-after/agent-tool-after.png)
+![After: Thinking and Tool Use](./assets/readme-after/agent-tool-after.png?v=readable-20260623)
 
 不要展示 hidden chain-of-thought。可以展示可观察摘要和受限 tool 输出。
 
@@ -225,7 +225,7 @@ LATER task sync-42 queued
 
 **改造后**
 
-![After: Approvals, Background Work, and Artifacts](./assets/readme-after/agent-approval-after.png)
+![After: Approvals, Background Work, and Artifacts](./assets/readme-after/agent-approval-after.png?v=readable-20260623)
 
 审批是 key-value 原子。大 artifact 只展示摘要和稳定引用，不把完整数据塞进聊天正文。
 
@@ -245,7 +245,7 @@ Partial assistant prose...
 
 **改造后**
 
-![After: Non-TTY and NDJSON Event Mode](./assets/readme-after/agent-events-after.png)
+![After: Non-TTY and NDJSON Event Mode](./assets/readme-after/agent-events-after.png?v=readable-20260623)
 
 非 TTY 下不保留 live UI、光标控制、动画、边框或 raw ANSI。机器事件使用稳定 type。
 
@@ -253,7 +253,7 @@ Partial assistant prose...
 
 完整 1024px 图覆盖 16 组 Agent Chat TUI：transcript role、输入草稿、多行粘贴、IME/CJK、assistant streaming、thinking summary、tool use、tool result、choice、approval、alert、timer、background task、subagent、主题适配、suggestion、file mention、cancel、approval outcome、artifact、plain non-TTY fallback 和 NDJSON event mode。
 
-![Agent Chat TUI Before / After](./assets/agent-chat-tui-before-after.png)
+![Agent Chat TUI Before / After](./assets/agent-chat-tui-before-after.png?v=readable-20260623)
 
 ## 文件结构
 
