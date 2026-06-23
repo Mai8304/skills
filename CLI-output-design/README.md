@@ -71,8 +71,8 @@ When these conflict, the earlier lens wins. A pretty layout never justifies a wr
 ## Before / after: ordinary CLI
 
 The README shows a few representative cases. The PNG gallery after these examples carries
-the full 24-case visual reference. In the examples below, `Before` and `After` are split so
-the improved output can use real semantic color in README-rendered HTML.
+the full 24-case visual reference. In the examples below, `Before` and `After` are split;
+`After` is rendered as a 1024px PNG so semantic colors remain visible in README renderers.
 
 ### 1. Errors That Guide
 
@@ -85,19 +85,7 @@ Error: failed
 
 **After**
 
-<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto"><span style="color:#e67875">✗ error:</span> missing required flag <span style="color:#8bcac3">--env</span>
-
-  <span style="color:#777d80">Usage:</span>
-    <span style="color:#8bcac3">mycli deploy --env &lt;name&gt;</span>
-
-  <span style="color:#777d80">Next:</span>
-    <span style="color:#8bcac3">mycli deploy --env staging</span>
-
-<span style="color:#e67875">✗ error:</span> config not found
-
-  <span style="color:#777d80">Reason:</span> no <span style="color:#8bcac3">myapp.toml</span> in this directory
-  <span style="color:#777d80">Next:</span>
-    <span style="color:#8bcac3">myapp init</span></pre>
+![After: Errors That Guide](./assets/readme-after/ordinary-errors-after.png)
 
 ### 2. Semantic Color, Progress, and Result State
 
@@ -114,16 +102,7 @@ Ran tests. Some failed. Lots of log output...
 
 **After**
 
-<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto">Run <span style="color:#8bcac3">mycli cache clear</span> to remove local cache.
-Docs:
-  <span style="color:#8bcac3">https://example.com/docs/cache</span>
-
-<span style="color:#8bcac3">model.bin</span>  [<span style="color:#8ecf8a">████████████</span><span style="color:#777d80">░░░░</span>] 74%  3.8/5.1 MB  (1.2 MB/s) eta 1s
-<span style="color:#8ecf8a">✓ pass</span> downloaded <span style="color:#8bcac3">model.bin</span> (5.1 MB) in 4.2s
-
-<span style="color:#8ecf8a">✓ pass 142</span>   <span style="color:#e67875">✗ fail 1</span>   <span style="color:#777d80">⊘ skip 3</span>        4.2s
-  <span style="color:#e67875">✗ fail</span> internal/cache: TestEvict/expired
-      cache_test.go:88: expected 0 entries, got 1</pre>
+![After: Semantic Color, Progress, and Result State](./assets/readme-after/ordinary-progress-after.png)
 
 ### 3. Data Shapes and Diagnostics
 
@@ -147,24 +126,7 @@ line 14 print(cfg) used after move
 
 **After**
 
-<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto"><span style="color:#777d80">NUMBER  TITLE                STATE   UPDATED</span>
-#128    Fix color fallback   open    2h ago
-#127    Bump deps            merged  1d ago
-
-Pull request <span style="color:#8bcac3">#128</span>                                  open
-  Title     Fix color fallback
-  Author    zw
-  Branch    <span style="color:#8bcac3">fix-color</span> -> <span style="color:#8bcac3">main</span>
-  Checks    <span style="color:#8ecf8a">✓ pass</span> 4
-  Files     6 changed (+128 -34)
-
-<span style="color:#e67875">error[E0382]:</span> borrow of moved value: <span style="color:#8bcac3">cfg</span>
-   <span style="color:#777d80">┌─ src/main.go:14:9</span>
-12 │   load(cfg)
-   │        <span style="color:#e5c069">--- value moved here</span>
-14 │   print(cfg)
-   │         <span style="color:#e67875">^^^ value used after move</span>
-   = help: clone <span style="color:#8bcac3">cfg</span> before load()</pre>
+![After: Data Shapes and Diagnostics](./assets/readme-after/ordinary-data-after.png)
 
 ### 4. Runtime Contracts and Redaction
 
@@ -198,37 +160,11 @@ connected with token sk-live-123456
 
 **After**
 
-<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto">{
-  "schema_version": "1",
-  "ok": false,
-  "duration_ms": 412,
-  "checks": [
-    {
-      "name": "config_file",
-      "status": "<span style="color:#e67875">fail</span>",
-      "message": "not configured",
-      "next_steps": [
-        { "command": "mycli config init", "reason": "create config" }
-      ]
-    }
-  ]
-}
-
-<span style="color:#777d80">NAME        STATUS</span>
-配置文件    <span style="color:#e5c069">missing</span>
-gateway     <span style="color:#8ecf8a">pass</span>
-
-<span style="color:#8ecf8a">✓ pass</span> connected
-  token: <span style="color:#777d80">[redacted]</span>
-
-<span style="color:#777d80">NO_COLOR fallback:</span>
-pass connected
-token: [redacted]
-</pre>
+![After: Runtime Contracts and Redaction](./assets/readme-after/ordinary-runtime-after.png)
 
 ### More Ordinary CLI Cases
 
-The full 2K gallery covers 24 ordinary CLI atoms: help, bad arguments, errors,
+The full 1024px gallery covers 24 ordinary CLI atoms: help, bad arguments, errors,
 technical-token emphasis, progress, tables, object details, file trees, diffs, content
 blocks, nested tasks, diagnostics, summaries, dry-run previews, empty states, logs,
 expressive notices, prompts, machine mode, CJK width, pager behavior, deprecations,
@@ -258,18 +194,7 @@ You: explain this error and suggest the smallest fix
 
 **After**
 
-<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto"><span style="color:#8bcac3">▌ You</span>
-  How do I reset the cache?
-
-<span style="color:#f4f1ea">▌ Assistant</span>
-  Run <span style="color:#8bcac3">mycli cache clear</span>.
-
-<span style="color:#8bcac3">❯ You</span>  explain this error and suggest the smallest fix
-
-<span style="color:#777d80">Submitted transcript:</span>
-<span style="color:#8bcac3">▌ You</span>
-  explain this error and suggest the smallest fix
-</pre>
+![After: Transcript roles and input composer](./assets/readme-after/agent-transcript-after.png)
 
 The live draft is not transcript history. Cursor movement, deletion, suggestions, and IME
 composition are input UI until the user submits.
@@ -288,16 +213,7 @@ raw output mixed into assistant prose
 
 **After**
 
-<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto"><span style="color:#8bcac3">◐ thinking</span>
-<span style="color:#777d80">∴ thinking</span> inspected 4 files; running tests next
-<span style="color:#8ecf8a">✓ thinking pass</span> 8s
-
-<span style="color:#8bcac3">◐ ⚙ shell</span> running
-  <span style="color:#777d80">⎿ command:</span> <span style="color:#8bcac3">go test ./internal/cache</span>
-
-<span style="color:#e67875">✗ ⚙ shell</span> fail 2.3s
-  <span style="color:#777d80">⎿ exit:</span> 1
-  <span style="color:#777d80">⎿ output:</span> cache_test.go:88: expected 0 entries, got 1</pre>
+![After: Thinking and Tool Use](./assets/readme-after/agent-tool-after.png)
 
 Never expose hidden chain-of-thought. Show concise observable summaries and bounded tool
 results with terminal state.
@@ -320,23 +236,7 @@ LATER task sync-42 queued
 
 **After**
 
-<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto">approval required
-  title: Delete stale branches
-  risk: <span style="color:#e5c069">high</span>
-  changes: 12 branches
-  next: approve with y, deny with n
-
-Approve? [y/N]
-
-<span style="color:#e5c069">⚠ warning:</span> tool output truncated to 200 lines
-<span style="color:#e67875">✗ error:</span> command failed with exit 2
-timer: retrying in 30s
-background: task queued · id=<span style="color:#8bcac3">sync-42</span>
-
-<span style="color:#f4f1ea">▌ Assistant</span>
-  Generated <span style="color:#8bcac3">checks.csv</span> with 10,002 rows.
-  Preview: 2 rows shown, 10,000 hidden.
-<span style="color:#777d80">artifact:</span> checks.csv</pre>
+![After: Approvals, Background Work, and Artifacts](./assets/readme-after/agent-approval-after.png)
 
 Approvals are decision atoms. Large artifacts get summaries and stable references, not full
 data dumps in the transcript.
@@ -357,23 +257,14 @@ Partial assistant prose...
 
 **After**
 
-<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto">Assistant: thinking started
-Tool shell: running command=<span style="color:#8bcac3">"go test ./internal/cache"</span>
-Tool shell: fail exit=1 duration_ms=2300
-Assistant: failing test is internal/cache TestEvict/expired
-
-{"type":"turn.start","role":"user","message":"Find the failing test."}
-{"type":"thinking.start","status":"running"}
-{"type":"tool.start","tool_name":"shell","call_id":"c1","status":"running"}
-{"type":"tool.end","tool_name":"shell","call_id":"c1","status":"fail","exit_code":1}
-{"type":"turn.end","role":"assistant","status":"pass"}</pre>
+![After: Non-TTY and NDJSON Event Mode](./assets/readme-after/agent-events-after.png)
 
 Off-TTY output removes live UI, cursor tricks, frames, animation, hidden role state, and
 raw ANSI. Machine streams use stable event types.
 
 ### More Agent Chat TUI Cases
 
-The full 2K gallery covers 16 Agent Chat cards: transcript roles, input draft, multiline
+The full 1024px gallery covers 16 Agent Chat cards: transcript roles, input draft, multiline
 paste, IME/CJK composition, assistant streaming, thinking summaries, tool use, tool
 results, choices, approvals, alerts, timers, background tasks, subagents, theme adaptation,
 suggestions, file mentions, cancellation, approval outcomes, artifacts, plain non-TTY

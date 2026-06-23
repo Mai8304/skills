@@ -62,7 +62,7 @@ cp -r skills/CLI-output-design ~/.codex/skills/cli-output-design
 
 ## 普通 CLI：改造前 / 改造后
 
-README 主体只展示少数典型 case；完整 24 项视觉参考放在本节末尾的 2K 图片里。下面每个 case 都把改造前和改造后分开写，改造后用 README HTML 直接显示语义颜色。
+README 主体只展示少数典型 case；完整 24 项视觉参考放在本节末尾的 1024px 图片里。下面每个 case 都把改造前和改造后分开写，改造后用 1024px PNG 固定显示语义颜色，避免 Markdown 渲染器清理 inline style 后变成黑白。
 
 ### 1. 会引导的错误
 
@@ -75,19 +75,7 @@ Error: failed
 
 **改造后**
 
-<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto"><span style="color:#e67875">✗ error:</span> missing required flag <span style="color:#8bcac3">--env</span>
-
-  <span style="color:#777d80">Usage:</span>
-    <span style="color:#8bcac3">mycli deploy --env &lt;name&gt;</span>
-
-  <span style="color:#777d80">Next:</span>
-    <span style="color:#8bcac3">mycli deploy --env staging</span>
-
-<span style="color:#e67875">✗ error:</span> config not found
-
-  <span style="color:#777d80">Reason:</span> no <span style="color:#8bcac3">myapp.toml</span> in this directory
-  <span style="color:#777d80">Next:</span>
-    <span style="color:#8bcac3">myapp init</span></pre>
+![After: Errors That Guide](./assets/readme-after/ordinary-errors-after.png)
 
 错误不是“红一点”就够了；它必须说清楚原因、上下文和下一步。
 
@@ -106,16 +94,7 @@ Ran tests. Some failed. Lots of log output...
 
 **改造后**
 
-<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto">Run <span style="color:#8bcac3">mycli cache clear</span> to remove local cache.
-Docs:
-  <span style="color:#8bcac3">https://example.com/docs/cache</span>
-
-<span style="color:#8bcac3">model.bin</span>  [<span style="color:#8ecf8a">████████████</span><span style="color:#777d80">░░░░</span>] 74%  3.8/5.1 MB  (1.2 MB/s) eta 1s
-<span style="color:#8ecf8a">✓ pass</span> downloaded <span style="color:#8bcac3">model.bin</span> (5.1 MB) in 4.2s
-
-<span style="color:#8ecf8a">✓ pass 142</span>   <span style="color:#e67875">✗ fail 1</span>   <span style="color:#777d80">⊘ skip 3</span>        4.2s
-  <span style="color:#e67875">✗ fail</span> internal/cache: TestEvict/expired
-      cache_test.go:88: expected 0 entries, got 1</pre>
+![After: Semantic Color, Progress, and Result State](./assets/readme-after/ordinary-progress-after.png)
 
 红色给当前失败，绿色给通过，黄色给风险，青色给技术 token。进度必须诚实，并且必须落到终态。
 
@@ -141,24 +120,7 @@ line 14 print(cfg) used after move
 
 **改造后**
 
-<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto"><span style="color:#777d80">NUMBER  TITLE                STATE   UPDATED</span>
-#128    Fix color fallback   open    2h ago
-#127    Bump deps            merged  1d ago
-
-Pull request <span style="color:#8bcac3">#128</span>                                  open
-  Title     Fix color fallback
-  Author    zw
-  Branch    <span style="color:#8bcac3">fix-color</span> -> <span style="color:#8bcac3">main</span>
-  Checks    <span style="color:#8ecf8a">✓ pass</span> 4
-  Files     6 changed (+128 -34)
-
-<span style="color:#e67875">error[E0382]:</span> borrow of moved value: <span style="color:#8bcac3">cfg</span>
-   <span style="color:#777d80">┌─ src/main.go:14:9</span>
-12 │   load(cfg)
-   │        <span style="color:#e5c069">--- value moved here</span>
-14 │   print(cfg)
-   │         <span style="color:#e67875">^^^ value used after move</span>
-   = help: clone <span style="color:#8bcac3">cfg</span> before load()</pre>
+![After: Data Shapes and Diagnostics](./assets/readme-after/ordinary-data-after.png)
 
 同质数据用表格，单个对象用 key-value，诊断要能被人和工具同时读取。
 
@@ -194,39 +156,13 @@ connected with token sk-live-123456
 
 **改造后**
 
-<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto">{
-  "schema_version": "1",
-  "ok": false,
-  "duration_ms": 412,
-  "checks": [
-    {
-      "name": "config_file",
-      "status": "<span style="color:#e67875">fail</span>",
-      "message": "not configured",
-      "next_steps": [
-        { "command": "mycli config init", "reason": "create config" }
-      ]
-    }
-  ]
-}
-
-<span style="color:#777d80">NAME        STATUS</span>
-配置文件    <span style="color:#e5c069">missing</span>
-gateway     <span style="color:#8ecf8a">pass</span>
-
-<span style="color:#8ecf8a">✓ pass</span> connected
-  token: <span style="color:#777d80">[redacted]</span>
-
-<span style="color:#777d80">NO_COLOR fallback:</span>
-pass connected
-token: [redacted]
-</pre>
+![After: Runtime Contracts and Redaction](./assets/readme-after/ordinary-runtime-after.png)
 
 机器模式是契约，不能混进 ANSI、spinner、提示性 prose 或不稳定字段；secret 必须先 redaction。
 
 ### 更多普通 CLI 例子
 
-完整 2K 图覆盖 24 个普通 CLI 输出原子：help、bad arguments、error、技术 token、进度、表格、对象详情、文件树、diff、内容块、嵌套任务、诊断、结果汇总、dry-run、空状态、日志、expressive notice、prompt、machine mode、CJK 宽度、pager、deprecation、中断、主题适配和 redaction。
+完整 1024px 图覆盖 24 个普通 CLI 输出原子：help、bad arguments、error、技术 token、进度、表格、对象详情、文件树、diff、内容块、嵌套任务、诊断、结果汇总、dry-run、空状态、日志、expressive notice、prompt、machine mode、CJK 宽度、pager、deprecation、中断、主题适配和 redaction。
 
 ![Ordinary CLI Before / After](./assets/ordinary-cli-before-after.png)
 
@@ -249,18 +185,7 @@ You: explain this error and suggest the smallest fix
 
 **改造后**
 
-<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto"><span style="color:#8bcac3">▌ You</span>
-  How do I reset the cache?
-
-<span style="color:#f4f1ea">▌ Assistant</span>
-  Run <span style="color:#8bcac3">mycli cache clear</span>.
-
-<span style="color:#8bcac3">❯ You</span>  explain this error and suggest the smallest fix
-
-<span style="color:#777d80">Submitted transcript:</span>
-<span style="color:#8bcac3">▌ You</span>
-  explain this error and suggest the smallest fix
-</pre>
+![After: Transcript roles and input composer](./assets/readme-after/agent-transcript-after.png)
 
 输入草稿是 live UI，不是历史记录。光标移动、删除、候选项、IME 组合态都不能污染 transcript。
 
@@ -278,16 +203,7 @@ raw output mixed into assistant prose
 
 **改造后**
 
-<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto"><span style="color:#8bcac3">◐ thinking</span>
-<span style="color:#777d80">∴ thinking</span> inspected 4 files; running tests next
-<span style="color:#8ecf8a">✓ thinking pass</span> 8s
-
-<span style="color:#8bcac3">◐ ⚙ shell</span> running
-  <span style="color:#777d80">⎿ command:</span> <span style="color:#8bcac3">go test ./internal/cache</span>
-
-<span style="color:#e67875">✗ ⚙ shell</span> fail 2.3s
-  <span style="color:#777d80">⎿ exit:</span> 1
-  <span style="color:#777d80">⎿ output:</span> cache_test.go:88: expected 0 entries, got 1</pre>
+![After: Thinking and Tool Use](./assets/readme-after/agent-tool-after.png)
 
 不要展示 hidden chain-of-thought。可以展示可观察摘要和受限 tool 输出。
 
@@ -309,23 +225,7 @@ LATER task sync-42 queued
 
 **改造后**
 
-<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto">approval required
-  title: Delete stale branches
-  risk: <span style="color:#e5c069">high</span>
-  changes: 12 branches
-  next: approve with y, deny with n
-
-Approve? [y/N]
-
-<span style="color:#e5c069">⚠ warning:</span> tool output truncated to 200 lines
-<span style="color:#e67875">✗ error:</span> command failed with exit 2
-timer: retrying in 30s
-background: task queued · id=<span style="color:#8bcac3">sync-42</span>
-
-<span style="color:#f4f1ea">▌ Assistant</span>
-  Generated <span style="color:#8bcac3">checks.csv</span> with 10,002 rows.
-  Preview: 2 rows shown, 10,000 hidden.
-<span style="color:#777d80">artifact:</span> checks.csv</pre>
+![After: Approvals, Background Work, and Artifacts](./assets/readme-after/agent-approval-after.png)
 
 审批是 key-value 原子。大 artifact 只展示摘要和稳定引用，不把完整数据塞进聊天正文。
 
@@ -345,22 +245,13 @@ Partial assistant prose...
 
 **改造后**
 
-<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto">Assistant: thinking started
-Tool shell: running command=<span style="color:#8bcac3">"go test ./internal/cache"</span>
-Tool shell: fail exit=1 duration_ms=2300
-Assistant: failing test is internal/cache TestEvict/expired
-
-{"type":"turn.start","role":"user","message":"Find the failing test."}
-{"type":"thinking.start","status":"running"}
-{"type":"tool.start","tool_name":"shell","call_id":"c1","status":"running"}
-{"type":"tool.end","tool_name":"shell","call_id":"c1","status":"fail","exit_code":1}
-{"type":"turn.end","role":"assistant","status":"pass"}</pre>
+![After: Non-TTY and NDJSON Event Mode](./assets/readme-after/agent-events-after.png)
 
 非 TTY 下不保留 live UI、光标控制、动画、边框或 raw ANSI。机器事件使用稳定 type。
 
 ### 更多 Agent Chat TUI 例子
 
-完整 2K 图覆盖 16 组 Agent Chat TUI：transcript role、输入草稿、多行粘贴、IME/CJK、assistant streaming、thinking summary、tool use、tool result、choice、approval、alert、timer、background task、subagent、主题适配、suggestion、file mention、cancel、approval outcome、artifact、plain non-TTY fallback 和 NDJSON event mode。
+完整 1024px 图覆盖 16 组 Agent Chat TUI：transcript role、输入草稿、多行粘贴、IME/CJK、assistant streaming、thinking summary、tool use、tool result、choice、approval、alert、timer、background task、subagent、主题适配、suggestion、file mention、cancel、approval outcome、artifact、plain non-TTY fallback 和 NDJSON event mode。
 
 ![Agent Chat TUI Before / After](./assets/agent-chat-tui-before-after.png)
 
