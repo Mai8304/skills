@@ -63,6 +63,11 @@ cp -r skills/CLI-output-design ~/.codex/skills/cli-output-design
 ## 普通 CLI：改造前 / 改造后
 
 下面的例子分两种：多数是 **同语义表现层改造**，即 Before 和 After 表达同一件事；少数是 **语义修复**，因为 Before 本身缺了必要信息。
+GitHub 的 Markdown 代码块以可复制为主，无法可靠表达完整终端配色；下面这张单列 PNG 是同一套规则的真实彩色渲染。
+
+![Ordinary CLI Before / After](./assets/ordinary-cli-before-after.png)
+
+这张单列图把普通 CLI 拆成 24 个输出原子：help、bad arguments、error、技术 token、进度、表格、对象详情、文件树、diff、内容块、嵌套任务、诊断、结果汇总、dry-run、空状态、日志、expressive notice、prompt、machine mode、CJK 宽度、pager、deprecation、中断、主题适配和 redaction。
 
 ### 1. Help、参数错误、错误文案
 
@@ -340,6 +345,10 @@ Pager:
 ## Agent Chat TUI：改造前 / 改造后
 
 Agent Chat 和普通 CLI 输出不同。它有 live input、transcript、assistant 流式输出、thinking、tools、approval、choice、background task、subagent、artifact 和机器事件。这个 skill 定义的是可组合原子，不是某个具体产品的一整套 UI 模板。
+
+![Agent Chat TUI Before / After](./assets/agent-chat-tui-before-after.png)
+
+这张单列图把 Agent Chat 拆成 16 组 TUI 原子：transcript role、输入草稿、多行粘贴、IME/CJK、assistant streaming、thinking summary、tool use、tool result、choice、approval、alert、timer、background task、subagent、主题适配、suggestion、file mention、cancel、approval outcome、artifact、plain non-TTY fallback 和 NDJSON event mode。
 
 ### 1. 角色、输入草稿、提交后的 transcript
 

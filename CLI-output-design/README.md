@@ -72,6 +72,16 @@ When these conflict, the earlier lens wins. A pretty layout never justifies a wr
 
 The examples below keep the same semantics wherever possible. A few examples are
 **semantic repairs**: the Before output lost required information, and the After restores it.
+GitHub Markdown code blocks are intentionally copyable plain text; the single-column PNG
+gallery below is the canonical colored rendering of the same design rules.
+
+![Ordinary CLI Before / After](./assets/ordinary-cli-before-after.png)
+
+This single-column gallery expands the ordinary CLI surface into 24 output atoms: help, bad arguments,
+errors, technical-token emphasis, progress, tables, object details, file trees, diffs,
+content blocks, nested tasks, diagnostics, result summaries, dry-run previews, empty
+states, logs, expressive notices, prompts, machine mode, CJK width, pager behavior,
+deprecations, interruption, theme adaptation, and redaction.
 
 ### 1. Command surfaces: help, bad args, and actionable errors
 
@@ -354,6 +364,14 @@ Agent Chat is not ordinary command output. It has live input, transcript roles, 
 streaming, thinking summaries, tool calls, choices, approvals, background work, artifacts,
 and machine-event fallbacks. The skill defines reusable atoms, not a product-specific full
 layout.
+
+![Agent Chat TUI Before / After](./assets/agent-chat-tui-before-after.png)
+
+This single-column gallery expands Agent Chat into 16 cards covering reusable TUI atoms: transcript roles, input draft,
+multiline paste, IME/CJK composition, assistant streaming, thinking summaries, tool use,
+tool results, choices, approvals, alerts, timers, background tasks, subagents, theme
+adaptation, suggestions, file mentions, cancellation, approval outcomes, artifacts,
+plain non-TTY fallback, and NDJSON event mode.
 
 ### 1. Transcript roles and input composer
 
