@@ -39,17 +39,15 @@ contract:
 ## Theme and terminal boundary
 
 Use ANSI-16 named colors so the user's terminal theme controls contrast. Do not assume a
-dark background; avoid hardcoded hex colors, hardcoded background fills, and low-contrast
-dim-only states. The user draft/submitted-user background row is the explicit TTY exception:
-it must be theme-adaptive and disappear in plain fallback. Every role/state must survive
-with color disabled.
+dark background; avoid hardcoded hex colors, background fills, and low-contrast dim-only
+states. Every role/state must survive with color disabled.
 
 Default theme mapping:
 
 | Atom | TTY style | Fallback |
 |---|---|---|
-| user draft / submitted user turn | subtle theme-adaptive background row + `›` prompt | `You:` |
-| assistant turn | green `●` marker + text | `Assistant:` |
+| user role / current input accent | cyan label or gutter | `You:` |
+| assistant role | default text, optional bold label | `Assistant:` |
 | system / tool metadata | dim/default label | `System:` / `Tool:` |
 | tool name / command / path / URL / function / formula | cyan technical token | raw copyable token |
 | warning / deprecation | yellow + `⚠` + word | `warning:` / `deprecated:` |
@@ -97,26 +95,17 @@ stable for logs and machine events.
 Base transcript shape:
 
 ```text
-› How do I reset the cache?
+▌ You
+  How do I reset the cache?
 
-● Run `mycli cache clear`.
+▌ Assistant
+  Run `mycli cache clear`.
 ```
-
-The fenced examples show the copyable text shape; in an interactive TTY the user row is
-rendered on a subtle full-width background block.
 
 Rules:
 
-- In an interactive TTY, submitted user turns use the same visual atom as the draft:
-  a subtle theme-adaptive background row, `›`, one space, then the user's exact text.
-  The background row should be taller than the text line so the input feels like an active
-  composer surface, not just colored text.
-- Assistant turns use a green `●` marker, one space, then assistant text. Do not prefix
-  them with `Assistant`, `Home Agent`, or a model/provider name in the interactive
-  transcript lane.
-- Align symbols and content consistently: the user `›` and assistant `●` occupy the same
-  marker column; the first content character begins in the same text column. Multiline
-  assistant output uses hanging indent under the first content character, not under the
+- The role label carries the turn identity; color and gutter are redundant enhancements.
+- Use hanging indent for multiline turns. Do not prefix every assistant line with a noisy
   marker.
 - Keep user-submitted content exact. Do not recolor code, paths, or quotes in a way that
   changes copy/paste semantics.
@@ -127,14 +116,7 @@ Rules:
 
 The draft composer is live UI, not transcript history.
 
-- Show the draft as a full-width, subtle background row with `›`, one space, then the
-  draft text. Omit `You` in the interactive composer.
-- The row background is a TTY-only affordance: use the terminal theme's existing surface
-  color or reverse-video-like styling; do not hardcode dark-only colors. In non-TTY,
-  logs, and persisted transcripts, remove the background.
-- Keep the row height visibly higher than the glyph height when the TUI owns the draw
-  surface. If the terminal renderer only supports character cells, preserve the `› text`
-  shape and avoid fake box characters.
+- Show a clear prompt/cursor anchor such as `❯` or `>` plus an optional role label.
 - Let the terminal's native cursor and selection do the work. Do not invent a fake cursor in
   persisted logs.
 - Deletion, editing, history navigation, and paste update the draft in place; they should not
@@ -151,32 +133,27 @@ The draft composer is live UI, not transcript history.
   bytes. If the TUI provides custom selection, persisted logs still use plain text.
 - Autocomplete, slash commands, file mentions, and history suggestions are suggestion atoms;
   they must be visually secondary and disappear from the submitted transcript unless chosen.
-- Submitted input collapses into the same `› text` row shape in the interactive transcript.
-  Persisted logs and non-TTY fallback still use `You:` so identity is not lost.
+- Submitted input collapses into a transcript turn with the `You` label.
 - Passwords, secrets, tokens, and credentials are redacted before they enter transcript,
   logs, screenshots, or machine events.
 
 Example draft:
 
 ```text
-› summarize src/cache.go and include edge cases
+❯ You  summarize src/cache.go and include edge cases
 ```
 
 After submit:
 
 ```text
-› summarize src/cache.go and include edge cases
+▌ You
+  summarize src/cache.go and include edge cases
 ```
 
 ## Assistant output atoms
 
 Assistant output streams as readable prose with minimal chrome.
 
-- Render the assistant's visible turn as `● ` plus text in the interactive transcript lane.
-  The dot is green in TTY and plain in fallback; do not show `▌ Home Agent`, provider names,
-  or model names as the per-message prefix.
-- For multiline assistant output, continuation lines align under the first text character:
-  two spaces before the continuation when the marker column is one cell wide.
 - Before the first token, show a TTY-only thinking/running atom if latency would otherwise
   look broken.
 - Once tokens stream, stop the spinner or move it to a quiet status line. Do not animate
@@ -206,10 +183,9 @@ Recommended atoms:
 
 Rules:
 
-- `▸` marks an expanded thinking block in interactive agent-chat surfaces. It uses the same
-  marker column as `›` and `●`; the first thinking character begins in the same text column.
-  Continuation lines use `│` in the marker column so the block reads as a single
-  intermediate state.
+- `▸` marks an expanded thinking block in interactive agent-chat surfaces. Continuation
+  lines use `│` so the block reads as a single intermediate state and aligns with the
+  transcript gutter.
 - `◐ ◒ ◑ ◓` remain valid for compact live thinking indicators before an expanded thinking
   block or while waiting for the first visible token. Braille spinner frames from
   `symbols.md` remain valid for ordinary progress.
@@ -329,10 +305,12 @@ These are examples of atoms combined into useful shapes. They are not normative 
 Minimal streaming turn:
 
 ```text
-› Find the failing test and propose the smallest fix.
+▌ You
+  Find the failing test and propose the smallest fix.
 
-▸ Inspecting the failing test output and checking the smallest affected package.
-● I found one failing test in `internal/cache`.
+▌ Assistant
+  ▸ Inspecting the failing test output and checking the smallest affected package.
+  I found one failing test in `internal/cache`.
 ```
 
 Tool call with bounded preview:
@@ -360,13 +338,14 @@ timer: next check at 23:00
 Good:
 
 ```text
-› explain this error and suggest the smallest fix
+❯ You  explain this error and suggest the smallest fix
 ```
 
 Submitted transcript:
 
 ```text
-› explain this error and suggest the smallest fix
+▌ You
+  explain this error and suggest the smallest fix
 ```
 
 Bad:
@@ -383,18 +362,18 @@ Why bad: draft cursor motion leaked into transcript history.
 Good:
 
 ```text
-› review this function:
-  ```go
-  func cacheKey(user string) string {
-    return strings.ToLower(user)
-  }
-  ```
+❯ You  review this function:
+        ```go
+        func cacheKey(user string) string {
+          return strings.ToLower(user)
+        }
+        ```
 ```
 
 Bad:
 
 ```text
-› review this function:
+❯ You  review this function:
 func cacheKey(user string) string {
 Assistant: I can help with that...
 ```
