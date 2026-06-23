@@ -5,6 +5,110 @@ piped / non-TTY behavior. A cookbook of composite shapes built from the atoms
 (`color.md`, `symbols.md`, `layout.md`, `status-and-progress.md`). Each recipe gives the
 shape, a TTY example, and the piped/narrow/agent degradation. Open the one you're rendering.
 
+## Table of contents
+
+- Command surfaces: help/usage, argument errors
+- Good / bad reference cases
+- Data display shapes: tables, object detail, lists, file trees, code/diff, content blocks, pagination
+- Operation lifecycle & outcomes: progress, nested tasks, checklists, diagnostics, summaries, dry-runs, empty states
+- Streaming & conversation: base chat transcript, streaming output
+- Notices & logs: verbosity, notices, expressive TTY notices
+- Prompts & selection: confirmation, single-select, multi-select, cancellation
+
+## Command surfaces
+
+### Help / usage
+
+Help output is a command surface, not a data result. Print help to stdout and exit `0`.
+Structure it into sections; avoid one-line brace blobs that require horizontal scanning.
+Use aligned two-column command/flag lists and short examples.
+
+Good:
+
+```text
+USAGE
+  mycli deploy [--env <name>] [--dry-run]
+
+COMMANDS
+  init      Create a config file
+  deploy    Deploy the current project
+  status    Show deployment status
+
+OPTIONS
+  --env <name>    Target environment
+  --dry-run       Preview changes without applying them
+
+EXAMPLES
+  mycli deploy --env staging
+  mycli deploy --env prod --dry-run
+```
+
+Bad:
+
+```text
+Usage: mycli {init,deploy,status,destroy,config,auth,logs,doctor,completion} [options]
+```
+
+Rules: keep command names and flags cyan on a TTY only; wrap descriptions with hanging
+indent; keep URLs and commands complete and copyable. Piped help is the same plain text,
+without color or pager. Long help may page only when stdout is a TTY.
+
+### Usage and argument errors
+
+Bad arguments are diagnostics. Print to stderr, exit `2`, and show only the relevant usage
+slice plus the concrete next step.
+
+Good:
+
+```text
+✗ error: missing required flag `--env`
+
+  Usage:
+    mycli deploy --env <name>
+
+  Next:
+    mycli deploy --env staging
+```
+
+Unknown command:
+
+```text
+✗ error: unknown command `deply`
+
+  Did you mean:
+    mycli deploy
+
+  Next:
+    mycli --help
+```
+
+Bad:
+
+```text
+Error: invalid
+```
+
+Do not dump full help after every usage error; it hides the fix. `--json` usage errors use
+a structured error object on stdout only when the command's machine contract says errors
+are represented in JSON; otherwise keep diagnostics on stderr and exit `2`.
+
+## Good / bad reference cases
+
+Use these as quick comparison anchors before choosing a detailed recipe:
+
+| Surface | Good | Bad |
+|---|---|---|
+| help / usage | sectioned `USAGE`, commands, options, examples | one-line `{cmd1,cmd2,...}` blob |
+| bad arguments | `✗ error:` + focused `Usage:` + `Next:` + exit `2` | `Error: invalid` with no fix |
+| table | borderless aligned columns, narrow record fallback | `+---+` grid that breaks on resize |
+| file tree | tree only on TTY; piped output is one path per line | tree art emitted into pipes |
+| progress | honest bar/spinner that resolves to `✓`/`✗` | fake 99% bar or orphaned spinner |
+| diagnostic | source frame + help + non-zero exit | stack trace or `failed` alone |
+| dry-run | count header + `+`/`~`/`-` prefixes + safe apply path | destructive apply with no preview |
+| prompt | blast radius before `[y/N]`; non-TTY flag path | blocks CI waiting for stdin |
+| notice | quiet stderr line; expressive frame only in TTY | framed banner in CI / `--json` |
+| machine mode | pure JSON/NDJSON on stdout | prose, ANSI, or spinners mixed into JSON |
+
 ## Data display shapes
 
 ### Tables
@@ -31,8 +135,8 @@ Pull request #128                                  open
   Title     Fix color fallback on dumb terminals
   Author    zhuangwei
   Branch    fix-color → main
-  Checks    ✓ 4 passed
-  Files     6 changed  (+128 −34)
+  Checks    ✓ pass 4
+  Files     6 changed  (+128 -34)
 ```
 
 For *one* object's fields (contrast Tables, which are many homogeneous rows). Aligned
@@ -72,7 +176,7 @@ src/main.go
 
 The `+`/`-` prefixes **carry the meaning; color only reinforces** (never red/green alone).
 File name bold; hunk header `@@` dim/cyan; context lines dim; line numbers in a dim gutter.
-Agent "edit applied" summary: `✓ Edited src/main.go (+12 −3)`, diff optional/expandable.
+Agent "edit applied" summary: `✓ Edited src/main.go (+12 -3)`, diff optional/expandable.
 **Piped →** raw unified diff (patch-compatible, no color); large diffs truncate/paginate.
 
 ### Content blocks
@@ -82,8 +186,9 @@ Agent "edit applied" summary: `✓ Edited src/main.go (+12 −3)`, diff optional
   the copyable region clean (no line numbers mixed in, or use OSC).
 - **Callout / quote:** left color bar `▌` + a colored label (`note:` / `warning:` / `tip:`);
   blockquote = dim `│` + dim text. No boxes — they break on resize/copy.
-- **Markdown:** headings bold, inline code cyan, links via OSC 8 hyperlinks (fallback: text
-  + dim URL).
+- **Markdown:** headings bold, inline code cyan. Links may use OSC 8 on an interactive TTY,
+  but the fallback is a complete, copyable raw URL (often on its own line), not a hidden
+  label that disappears in logs.
 
 ### Pagination & pager
 
@@ -112,13 +217,14 @@ each with its own spinner → `✓`/`✗`, parents rolling up child status:
   ⠙ migrate
     ✓ schema           0.8s
     ⠙ seed data
-  • smoke tests        pending
+  • smoke tests        queued
 ```
 
 Indent children by 2; a parent shows `✓` only when **all** children pass, `✗` if any fail
-(and surfaces which one). In-progress nodes spin; not-yet-started nodes are dim `•`. On a
-narrow terminal or non-TTY, flatten to sequential `parent → child` milestone lines (no live
-tree). Cross-link `status-and-progress.md`.
+(and surfaces which one). In-progress nodes spin; not-yet-started nodes are dim `•` with a
+phase label such as `queued` (not a terminal status). On a narrow terminal or non-TTY,
+flatten to sequential `parent → child` milestone lines (no live tree). Cross-link
+`status-and-progress.md`.
 
 ### Checklist
 
@@ -128,7 +234,7 @@ tree). Cross-link `status-and-progress.md`.
   ⚠ Disk space       2.1 GB free
   ✗ Auth token       missing
 
-3 passed · 1 warning · 1 failed
+pass 3 · warn 1 · fail 1
 ```
 
 Section header `◆`; items indent 2; value column aligned; running items show a spinner that
@@ -157,7 +263,7 @@ Distinct from a single error's wording (`copywriting.md`).
 ### Result & test summaries
 
 ```
-✓ 142 passed   ✗ 1 failed   ⊘ 3 skipped        4.2s
+✓ pass 142   ✗ fail 1   ⊘ skip 3        4.2s
 
   ✗ internal/cache: TestEvict/expired
       cache_test.go:88: expected 0 entries, got 1
@@ -180,8 +286,9 @@ Plan: 2 to add · 1 to change · 0 to destroy
 Run with --apply to execute.
 ```
 
-`+`/`~`/`-` prefixes (add/change/destroy), aligned, with a **count header**; show
-`old → new` for changes. **"No changes" is a first-class state** (`No changes. Everything is
+`+`/`~`/`-` prefixes (add/change/destroy), aligned, with a **count header**; color only
+reinforces the prefix (`+` green, `~` yellow, `-` red). Show `old → new` for changes; prefer
+that over strikethrough. **"No changes" is a first-class state** (`No changes. Everything is
 up to date.`). Before a mutating apply, show this summary + blast radius, then confirm (see
 `Confirmation & destructive actions`); default to the safe path. **Piped / `--json` →** the
 structured change set.
@@ -214,7 +321,9 @@ next-step; distinguish "nothing matches" from "not set up yet" (point the latter
 **Left gutter bar `▌` + a colored role name** distinguishes turns (user cyan / assistant
 default / system+tool dim); role is carried by label + color, not indentation alone. Tool
 calls/results render as a distinct dim, collapsible block. Reads like a transcript — minimal
-decoration.
+decoration. For full agent-chat TUI states — input draft, cursor/selection behavior,
+thinking, tool use/results, approvals, choices, background tasks, and subagents — open
+`agent-chat-tui.md`; this section is only the base transcript pattern.
 
 ### Streaming output
 
@@ -249,10 +358,36 @@ A new version of mycli is available: 1.2.0 → 1.3.0
 Run `mycli upgrade` to update.
 ```
 
-Non-blocking, on **stderr**, visually quiet (dim), never interrupting the primary result on
-stdout. Show once / rate-limited; respect an opt-out env var. Deprecation warnings name
-what's deprecated, the replacement, and the removal timeline. **Never** let a notice pollute
-piped / `--json` stdout.
+Non-blocking, on **stderr**, visually quiet (default/dim), never interrupting the primary
+result on stdout. Show once / rate-limited; respect an opt-out env var. Deprecation
+warnings are yellow, not red unless the command fails; they name what's deprecated, the
+replacement, and the removal timeline when known. **Never** let a notice pollute piped /
+`--json` stdout.
+
+**Expressive TTY notice** — for low-frequency, non-blocking interactive notices such as an
+available update. It is the only notice shape that may use a light frame, a small text-safe
+icon, and an underlined URL:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ ✦ Update available!  0.135.0 → 0.141.0                       │
+│ Run npm install -g @openai/codex to update.                  │
+│                                                              │
+│ See full release notes:                                      │
+│ https://github.com/openai/codex/releases/latest              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+Keep it to one light frame and a few lines; no nested boxes, thick borders, background
+fills, or emoji. The URL remains complete and copyable; OSC 8 clickability is only an
+enhancement. **Piped / CI / `NO_COLOR` / `TERM=dumb` / `--json` →** no frame, no underline,
+no OSC 8, no icon dependency:
+
+```
+Update available: 0.135.0 -> 0.141.0
+Run npm install -g @openai/codex to update.
+Release notes: https://github.com/openai/codex/releases/latest
+```
 
 ## Prompts & selection
 
@@ -296,7 +431,8 @@ radio `●`/`○` as the cursor, never both on the same row:
 
 Long lists scroll in a viewport with a "N more" hint plus **type-to-filter**; wrap around at
 the ends. On confirm, **collapse to one line**: `✓ Region · us-west-2`. ASCII pointer `>`;
-radio fallback `(•)`/`( )`.
+radio fallback `(•)`/`( )`. Reverse video is allowed only for the current row in a prompt
+or menu; it is not an alert or emphasis style.
 
 ### Multi-select (pick any)
 
@@ -320,8 +456,8 @@ still signals "pick many.")
 
 A dim, concise hint line lists **only the keys this prompt actually uses**, lowercase and
 `·`-separated: `↑/↓ move` · `enter select` · `space toggle` (multi) · `/ filter` (long lists)
-· `esc ‹ back` (multi-step) · `ctrl-c quit`. Support `j`/`k` silently. In a multi-step flow,
+· `esc back` (multi-step) · `ctrl-c quit`. Support `j`/`k` silently. In a multi-step flow,
 show progress (`Step 2 of 4`) or a breadcrumb, and **`esc`/`←` returns to the previous step
 with its answer restored**. Give `esc` one meaning (back *or* cancel) and keep it consistent.
-On cancel, restore the cursor and terminal, print a quiet `■ Cancelled.` (or nothing), and
-exit `130`.
+ASCII fallback for navigation hints uses words (`up/down move`, `back`). On cancel, restore
+the cursor and terminal, print a quiet `■ Cancelled.` (or nothing), and exit `130`.

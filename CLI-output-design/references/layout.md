@@ -125,12 +125,12 @@ silently breaks every aligned shape the moment a cell holds Chinese/Japanese/Kor
 # Wrong — padded by rune count, so the CJK rows run long
 NAME      STATUS
 配置文件      missing
-gateway   ok
+gateway   pass
 
 # Right — padded by display width (each 中文 char = 2 cols)
 NAME        STATUS
 配置文件    missing
-gateway     ok
+gateway     pass
 ```
 
 Use a width-aware function (`wcwidth` / east-asian-width) for column padding and for

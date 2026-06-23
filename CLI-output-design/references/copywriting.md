@@ -23,6 +23,9 @@ Don't apologize — instruct.
 - Be brief on success; **if you change state, tell the user what changed** (clig.dev).
 - Keep tense and the status vocabulary consistent across the whole CLI.
 - Lower-case, concise messages without trailing periods for short status lines (Heroku style).
+- Use canonical human-output labels: `note:`, `warning:`, `deprecated:`, and `error:`.
+- For deprecations, name the replacement when known; include a removal version/date only when
+  it is known, never guessed.
 
 **Don't**
 
@@ -30,6 +33,8 @@ Don't apologize — instruct.
 - Dump jargon or a raw stack trace as the whole message.
 - Apologize ("Sorry, …") instead of explaining and instructing.
 - Mix synonyms (`ok`/`done`/`success`) for one status — see the vocabulary below.
+- Use log-style uppercase levels (`WARN`, `ERROR`, `DEPRECATED`) as the default human
+  message shape; reserve those for logs.
 
 ## Real example — rewrite a bad error
 
@@ -56,26 +61,39 @@ template:
 
 ## Cheat-sheet
 
-**Error / message template** (contextual — default to the one-liner; expand only when there
-is a concrete remedy):
+**Message templates** — short by default; expand only when there is a concrete cause,
+remedy, or migration path:
 
 ```
-one-liner:   ✗ error: <what failed, concretely>
+notice:      note: <neutral fact>
+             hint: <optional next action>
 
-with remedy: ✗ <what failed, concretely>
+warning:     ⚠ warning: <condition the user should notice>
+             <one-line action or suppression path, if useful>
 
-               Reason: <why>
-               Next:
-                 <exact command or action>
+deprecation: ⚠ deprecated: <old name> is deprecated
+             Use <replacement> instead.
+             Removal: <known version/date>   # only if known
+
+error:       ✗ error: <what failed, concretely>
+
+             Reason: <why>
+             Next:
+               <exact command or action>
 ```
 
 Severity prefixes, all three signals redundant (color in `color.md`, glyphs in `symbols.md`):
 
 ```
-✗ error: …      (red)        ⚠ warning: …   (yellow)
-✓ <message>     (green; success is brief, usually no label word)
-→ …             (in progress)              note: …   (dim)
+note: …          (default/dim)   ⚠ warning: …     (yellow)
+⚠ deprecated: …  (yellow)        ✗ error: …       (red)
+✓ <message>      (green; success is brief, usually no label word)
+→ …              (in progress)
 ```
+
+Do not promote a deprecation to red unless the deprecated input prevents the current command
+from succeeding. Red means this operation failed; yellow means attention, migration, or
+future risk.
 
 **Status vocabulary** — one canonical set, shared with `status-and-progress.md`:
 

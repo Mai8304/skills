@@ -8,7 +8,7 @@ never the only carrier).
 A small, fixed set of **semantic Unicode glyphs** makes status scannable — but each glyph
 only ever **supplements text**, never replaces it (a screen reader, a `grep`, and a
 minimal terminal all need the word). Keep the set tiny and consistent: one success mark,
-one failure mark, one warning mark, across the whole CLI.
+one failure mark, one warning mark, one skip mark, across the whole CLI.
 
 **No emoji by default.** Emoji render at inconsistent widths (most are width-2 and break
 column alignment), look different on every terminal/font, and read as toy-ish for a
@@ -20,7 +20,7 @@ skill takes the conservative line and reserves emoji for explicit opt-in.)
 
 **Do**
 
-- Use one glyph per meaning from the table below, and pair it with a word (`✓ passed`).
+- Use one glyph per meaning from the table below, and pair it with a word (`✓ pass`).
 - Stick to **width-1 BMP glyphs** so columns stay aligned.
 - Provide an **ASCII fallback** for every glyph (see `robustness.md` for when it kicks in).
 - Use at most **one leading status glyph per line**; use `─` dividers only at section breaks.
@@ -54,18 +54,23 @@ Unicode              ASCII fallback
   ✓ Node version       [OK]   Node version
   ⚠ Disk space         [WARN] Disk space
   ✗ Auth token         [FAIL] Auth token
+  ⊘ Optional cache      [SKIP] Optional cache
 ```
 
 ## Cheat-sheet
 
 | Unicode | Meaning | ASCII fallback |
 |---|---|---|
-| `✓` | pass / done | `[OK]` |
+| `✓` | pass / completed terminal state | `[OK]` |
 | `✗` | fail / blocked | `[FAIL]` |
-| `⚠` | warning | `[WARN]` |
+| `⚠` | warn / warning | `[WARN]` |
+| `⊘` | skip / intentionally not run | `[SKIP]` |
 | `→` | next / transition | `->` |
 | `•` | neutral bullet | `-` |
 | `◆` | section / phase | `#` |
+| `▌` | transcript / callout left gutter | `|` |
+| `✦` | optional expressive TTY notice icon | omit |
+| `·` | compact inline separator | `;` |
 | `…` | truncation | `...` |
 | `⠙` | spinner frame (TTY only) | `[working]` (static) |
 | `─` | divider (sparingly) | `-` |
@@ -83,6 +88,23 @@ many); the cursor is separate from the selection state (see `output-patterns.md`
 | `●` / `○` | radio selected / unselected (single-select) | `(•)` / `( )` |
 | `[x]` / `[ ]` | checkbox checked / unchecked (multi-select) | `[x]` / `[ ]` |
 | `■` | cancelled end-cap | `[cancelled]` |
+| `↑` / `↓` | move up / down hint | `up` / `down` |
+| `←` | back hint | `back` |
+
+**Agent-chat optional glyphs** — use only inside an interactive agent-chat TUI, and only
+with a stable label/status word. They are atoms, not a required full layout (see
+`agent-chat-tui.md`):
+
+| Unicode | Meaning | ASCII fallback |
+|---|---|---|
+| `⚙` | tool-use marker before a tool name | `tool:` |
+| `◐` `◒` `◑` `◓` | lightweight thinking/tool spinner frames (TTY only) | `[running]` |
+| `⎿` | child detail: args, output, result, nested event | `->` |
+| `∴` | reasoning/thinking summary marker | `thinking:` |
+
+Avoid emoji-presentation variants such as `⚙️`; if a terminal renders any of these wider
+than one cell, fall back to ASCII for aligned views. On completion, replace spinner frames
+with terminal state glyphs (`✓`/`✗`) or a plain status word.
 
 **Display width:** these and all glyphs assume width-1 cells. Data you render (table cells,
 tree labels, prompt options) may contain **double-width** CJK or emoji — align and truncate

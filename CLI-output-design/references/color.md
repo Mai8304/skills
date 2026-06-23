@@ -24,6 +24,11 @@ Use the **ANSI-16 named colors, not hardcoded hex/truecolor.** Named colors foll
 user's terminal theme (light or dark); a hardcoded `#ff0000` can turn unreadable against
 their background. Reach for truecolor only when genuinely necessary and theme-aware.
 
+The default posture is a **strict baseline**: low-decoration, semantic, and script-friendly.
+The one explicit exception is an **expressive TTY notice** — a low-frequency, non-blocking
+interactive notice may use a light frame, a small text-safe icon, and an underlined URL, but
+only when the same information has a clean plain-text fallback.
+
 ## Do / Don't
 
 **Do**
@@ -39,7 +44,12 @@ their background. Reach for truecolor only when genuinely necessary and theme-aw
   render it as bright color, or drop it).
 - In an error block, color the **headline** red — leave the body default so the one line
   that matters stays findable.
-- Give commands, paths, URLs, and flags one accent color (cyan), distinct from status colors.
+- Give technical tokens one accent color (cyan): commands, flags, env vars, config keys,
+  paths, URLs, function names, and formulas when they are the thing being identified or
+  copied.
+- Use **typed emphasis**: outcome numbers use bold/default (plus status color only when the
+  number itself carries pass/fail/warn); technical tokens use cyan; status words use status
+  colors; ordinary prose stays default.
 
 **Don't**
 
@@ -50,6 +60,9 @@ their background. Reach for truecolor only when genuinely necessary and theme-aw
   them apart).
 - Paint a whole multi-line error red — it buries the actionable line.
 - Hardcode hex that ignores the user's theme.
+- Use cyan as a generic "important" color; it means technical token / link / selected
+  accent, not emphasis.
+- Use underline, italic, or strikethrough as generic emphasis.
 
 ## Real examples
 
@@ -75,11 +88,21 @@ Hue — ANSI-16 named, semantic *state* (always one of three redundant signals):
 
 | Hue | Meaning |
 |---|---|
-| green | pass / success / added |
-| red | fail / error / removed — **headline only**, not the whole block |
-| yellow | warn / attention / changed |
-| cyan | accent: command, path, URL, flag, selected item |
+| green | pass / success / added / created |
+| red | fail / error / removed / deleted — **headline only**, not the whole block |
+| yellow | warn / attention / deprecation / changed |
+| cyan | technical accent: command, path, URL, flag, env var, config key, function, formula, selected item |
 | (default) | body text and ordinary output — most of the screen |
+
+Severity ladder — visual strength follows command semantics:
+
+| Severity | Color | Shape |
+|---|---|---|
+| notice | default or dim | `note:` / `hint:`, no warning glyph |
+| expressive TTY notice | cyan accent + optional light frame | interactive TTY only; clean plain-text fallback |
+| warning | yellow | `⚠ warning:`; command can continue |
+| deprecation | yellow | `⚠ deprecated:` plus replacement when known |
+| error | red | `✗ error:`; current operation failed or cannot continue |
 
 Emphasis — intensity, **orthogonal to hue**; carries hierarchy, not state:
 
@@ -89,17 +112,34 @@ Emphasis — intensity, **orthogonal to hue**; carries hierarchy, not state:
 | (default) | baseline — the bulk of output | — |
 | dim / gray | demote: timestamps, hints, metadata, `unchanged` | weakest signal; never the sole mark of a distinction that matters |
 
-Other SGR attributes — avoid by default: reserve **underline** for the OSC-8 hyperlink-text
-fallback and **reverse** for a selected row; skip **italic** (it competes with `dim` and
-degrades unevenly).
+Technical-token emphasis:
+
+| Token | Style |
+|---|---|
+| command / flag / env var / config key | cyan, usually backticked in prose |
+| path / URL | cyan when emphasized; keep complete and copyable; do not wrap mid-token |
+| function / formula | cyan only when the function or formula is the subject |
+| important number | bold default; add status color only when it carries a status |
+| explanatory sentence | default text; use structure and labels instead of coloring the whole sentence |
+
+Other SGR attributes are **reserved, not decorative**:
+
+| Attribute | Use | Avoid |
+|---|---|---|
+| underline | URL fallback / expressive TTY notice URL | generic emphasis or warning |
+| reverse | current selected row in a prompt/menu | warning, error, or notice background |
+| italic | avoid by default; terminal support is uneven | notes, hints, or "soft" emphasis |
+| strikethrough | avoid by default; prefer `old → new` and diff `-`/`+` | deprecation, replacement, or change-plan old values |
 
 **Turn color off** when any of these hold (mechanics in `robustness.md`): `NO_COLOR` is set,
 `--no-color` is passed, `TERM=dumb`, stdout is not a TTY (piped or redirected), or the output
-is `--json` / machine mode. Offer `FORCE_COLOR` for the deliberate-override case. Keep the
-*information* identical with color off — color only ever accelerates, never carries.
+is `--json` / machine mode. Also drop frames, underline, OSC 8 hyperlinks, reverse video,
+and other SGR attributes. Offer `FORCE_COLOR` for the deliberate-override case. Keep the
+*information* identical with color off — decoration only ever accelerates, never carries.
 
 **Pairings** (color is always one of three redundant signals): green+`✓`+word, red+`✗`+word,
-yellow+`⚠`+word. See `symbols.md` for the glyph set and `copywriting.md` for the words.
+yellow+`⚠`+word. See `symbols.md` for the glyph set and `copywriting.md` for canonical
+labels (`note:`, `warning:`, `deprecated:`, `error:`).
 
 Sources: clig.dev — "the eye will be drawn to red text, so use it intentionally and
 sparingly." Heroku CLI Style Guide — yellow/red reserved for warnings/errors; "too many

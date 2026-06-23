@@ -7,8 +7,9 @@ surviving whatever environment it lands in.
 
 **Detect the channel before you decorate, then degrade gracefully.** The same command runs
 in an interactive terminal, a pipe, a CI log, a dumb terminal, and a 40-column window — and
-must stay correct and readable in all of them. Color, animation, and Unicode are
-*enhancements layered on top of* output that is already complete in plain ASCII text.
+must stay correct and readable in all of them. Color, animation, Unicode, OSC 8 links,
+underline, reverse video, and framed notices are *enhancements layered on top of* output
+that is already complete in plain ASCII text.
 
 Exit codes are part of the output contract: a script or agent reads them before it reads a
 word.
@@ -21,6 +22,8 @@ word.
 - Honor, in order: explicit `--no-color` / `--color`, then `NO_COLOR` (off) and
   `FORCE_COLOR` (on), then `TERM=dumb` (off), then non-TTY (off).
 - Detect **CI** (e.g. the `CI` env var) and default to plain, non-animated output.
+- Strip all styling attributes when decoration is off: color, bold/dim, underline, reverse,
+  OSC 8 hyperlinks, cursor tricks, and notice frames.
 - **Detect terminal width** at runtime; fall back to a sane default (e.g. 80) only when it
   is genuinely undetectable — never hardcode it as the assumption.
 - Provide an **ASCII fallback** for every Unicode glyph when the locale/terminal can't render it.
@@ -34,6 +37,8 @@ word.
 **Don't**
 
 - Emit ANSI escapes or spinners to a pipe / file / CI log.
+- Render expressive TTY notices (frames, underlined URLs, OSC 8 links, icon-dependent
+  headings) outside an interactive terminal.
 - Assume 80 columns, a UTF-8 terminal, or single-width characters.
 - **Block on stdin to prompt when there's no TTY** (CI / pipe / agent) — use a flag or a
   default, or fail with a clear message; never deadlock.
@@ -58,6 +63,7 @@ produces un-styled output. Both are TTY/`NO_COLOR` detection doing its job.
 
 ```
 isatty(stdout)?        no  → no color, no spinner, no animation, no interactive prompt
+isatty(stderr)?        no  → no styled progress, logs, diagnostics, or notices
 NO_COLOR set?          yes → no color
 FORCE_COLOR set?       yes → color even when piped (deliberate override)
 TERM=dumb?             yes → no color, no cursor tricks
@@ -67,6 +73,11 @@ locale not UTF-8?      → ASCII fallback glyphs
 text has CJK / emoji?  → measure by display width (2 cols), not char count
 stdout not a TTY?      → block-buffered: flush per line/record so it doesn't look hung
 ```
+
+**Decoration fallback:** when decoration is off, keep the same facts and ordering but remove
+the presentation layer. An expressive notice becomes plain lines; an OSC 8 hyperlink becomes
+a complete raw URL; reverse-selected menu rows fall back to a pointer (`>`); Unicode glyphs
+fall back to the ASCII table in `symbols.md`.
 
 **Exit codes** (keep the set small and documented):
 

@@ -46,13 +46,13 @@ word, printed on **stderr** because it's "out-of-band information on a running t
 
 ```
 $ heroku maintenance:on --app myapp
-Enabling maintenance mode for ⬢ myapp... done
+Enabling maintenance mode for myapp... done
 ```
 
 **Determinate download** (convention, e.g. `cargo`/`npm`/`docker pull` layer bars):
 
 ```
-[████████████░░░░] 74%  3.8/5.1 MB  ⟨1.2 MB/s⟩ eta 1s
+[████████████░░░░] 74%  3.8/5.1 MB  (1.2 MB/s) eta 1s
 ```
 
 **Indeterminate step**, and its piped collapse:
@@ -66,17 +66,24 @@ On completion the live line becomes `✓ Resolved 142 packages` (or `✗ …` on
 
 ## Cheat-sheet
 
-**Status vocabulary** — one set across the whole CLI; never substitute synonyms:
+**Status vocabulary** — one set across the whole CLI; never substitute synonyms for state
+labels, table status columns, events, or machine enums:
 
 ```
 running   pass   fail   warn   skip   changed   unchanged
 ```
 
-(`ok`/`done`/`success`/`passed` are *not* alternates for these — pick the canonical word.)
+(`ok`/`done`/`success`/`passed` are *not* alternates for these as state names — pick the
+canonical word.) Human prose may still use ordinary grammar when it is not acting as a
+status label, but compact summaries should prefer the canonical tokens: `pass 3 · warn 1 ·
+fail 1`.
 
 **Determinate vs indeterminate:** total known → bar with real %; total unknown → spinner +
 label. Multi-item work → one live line per item, collapsing to a one-line summary; degrade
 to sequential lines off-TTY.
+
+**Progress bar characters:** block bars (`█`/`░`) are TTY-only; ASCII fallback uses stable
+single-width characters such as `[############----]`.
 
 **Spinner frames** (TTY only): `⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏`; ASCII fallback `[working]` (static).
 Always resolve to `✓`/`✗`.
