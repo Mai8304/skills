@@ -62,7 +62,7 @@ cp -r skills/CLI-output-design ~/.codex/skills/cli-output-design
 
 ## 普通 CLI：改造前 / 改造后
 
-README 主体只展示少数典型 case；完整 24 项视觉参考放在本节末尾的 1024px 图片里。下面每个 case 都把改造前和改造后分开写，改造后用 1024px PNG 固定显示语义颜色，避免 Markdown 渲染器清理 inline style 后变成黑白。
+README 主体只展示少数典型 case；完整 24 项视觉参考放在本节末尾的 1024px 图片里。下面每个 case 都把改造前和改造后分开写，改造后使用 GitHub 原生语法高亮保持彩色文本，而不是截图。`diff` 代码块里的 `+`、`-`、`!`、`#`、`@@` 是 README 高亮标记，不是要求 CLI 必须输出的字符。精确的终端视觉、间距和完整覆盖放在 gallery 图片里。
 
 ### 1. 会引导的错误
 
@@ -75,7 +75,21 @@ Error: failed
 
 **改造后**
 
-![After: Errors That Guide](./assets/readme-after/ordinary-errors-after.png?v=readable-20260623)
+```diff
+- ✗ error: missing required flag --env
+
+# Usage:
+#   mycli deploy --env <name>
+
+# Next:
+#   mycli deploy --env staging
+
+- ✗ error: config not found
+
+# Reason: no myapp.toml in this directory
+# Next:
+#   myapp init
+```
 
 错误不是“红一点”就够了；它必须说清楚原因、上下文和下一步。
 
@@ -94,7 +108,20 @@ Ran tests. Some failed. Lots of log output...
 
 **改造后**
 
-![After: Semantic Color, Progress, and Result State](./assets/readme-after/ordinary-progress-after.png?v=readable-20260623)
+```diff
+# Run mycli cache clear to remove local cache.
+# Docs:
+#   https://example.com/docs/cache
+
+@@ model.bin  [████████████░░░░] 74%  3.8/5.1 MB  (1.2 MB/s) eta 1s @@
++ ✓ pass downloaded model.bin (5.1 MB) in 4.2s
+
++ ✓ pass 142
+- ✗ fail 1
+# ⊘ skip 3        4.2s
+- ✗ fail internal/cache: TestEvict/expired
+#     cache_test.go:88: expected 0 entries, got 1
+```
 
 红色给当前失败，绿色给通过，黄色给风险，青色给技术 token。进度必须诚实，并且必须落到终态。
 
@@ -120,7 +147,26 @@ line 14 print(cfg) used after move
 
 **改造后**
 
-![After: Data Shapes and Diagnostics](./assets/readme-after/ordinary-data-after.png?v=readable-20260623)
+```diff
+# NUMBER  TITLE                STATE   UPDATED
+#128    Fix color fallback   open    2h ago
+#127    Bump deps            merged  1d ago
+
+@@ Pull request #128                                  open @@
+#   Title     Fix color fallback
+#   Author    zw
+#   Branch    fix-color -> main
++   Checks    ✓ pass 4
+#   Files     6 changed (+128 -34)
+
+- error[E0382]: borrow of moved value: cfg
+#    ┌─ src/main.go:14:9
+# 12 │   load(cfg)
+!    │        --- value moved here
+# 14 │   print(cfg)
+-    │         ^^^ value used after move
+#    = help: clone cfg before load()
+```
 
 同质数据用表格，单个对象用 key-value，诊断要能被人和工具同时读取。
 
@@ -156,7 +202,36 @@ connected with token sk-live-123456
 
 **改造后**
 
-![After: Runtime Contracts and Redaction](./assets/readme-after/ordinary-runtime-after.png?v=readable-20260623)
+```json
+{
+  "schema_version": "1",
+  "ok": false,
+  "duration_ms": 412,
+  "checks": [
+    {
+      "name": "config_file",
+      "status": "fail",
+      "message": "not configured",
+      "next_steps": [
+        { "command": "mycli config init", "reason": "create config" }
+      ]
+    }
+  ]
+}
+```
+
+```diff
+# NAME        STATUS
+! 配置文件    missing
++ gateway     pass
+
++ ✓ pass connected
+#   token: [redacted]
+
+# NO_COLOR fallback:
+# pass connected
+# token: [redacted]
+```
 
 机器模式是契约，不能混进 ANSI、spinner、提示性 prose 或不稳定字段；secret 必须先 redaction。
 
@@ -185,7 +260,19 @@ You: explain this error and suggest the smallest fix
 
 **改造后**
 
-![After: Transcript roles and input composer](./assets/readme-after/agent-transcript-after.png?v=readable-20260623)
+```diff
+@@ ▌ You @@
+#   How do I reset the cache?
+
+@@ ▌ Assistant @@
+#   Run mycli cache clear.
+
+@@ ❯ You  explain this error and suggest the smallest fix @@
+
+# Submitted transcript:
+@@ ▌ You @@
+#   explain this error and suggest the smallest fix
+```
 
 输入草稿是 live UI，不是历史记录。光标移动、删除、候选项、IME 组合态都不能污染 transcript。
 
@@ -203,7 +290,18 @@ raw output mixed into assistant prose
 
 **改造后**
 
-![After: Thinking and Tool Use](./assets/readme-after/agent-tool-after.png?v=readable-20260623)
+```diff
+@@ ◐ thinking @@
+# ∴ thinking inspected 4 files; running tests next
++ ✓ thinking pass 8s
+
+@@ ◐ ⚙ shell running @@
+#   ⎿ command: go test ./internal/cache
+
+- ✗ ⚙ shell fail 2.3s
+#   ⎿ exit: 1
+#   ⎿ output: cache_test.go:88: expected 0 entries, got 1
+```
 
 不要展示 hidden chain-of-thought。可以展示可观察摘要和受限 tool 输出。
 
@@ -225,7 +323,25 @@ LATER task sync-42 queued
 
 **改造后**
 
-![After: Approvals, Background Work, and Artifacts](./assets/readme-after/agent-approval-after.png?v=readable-20260623)
+```diff
+! approval required
+#   title: Delete stale branches
+!   risk: high
+#   changes: 12 branches
+#   next: approve with y, deny with n
+
+# Approve? [y/N]
+
+! ⚠ warning: tool output truncated to 200 lines
+- ✗ error: command failed with exit 2
+# timer: retrying in 30s
+# background: task queued · id=sync-42
+
+@@ ▌ Assistant @@
+#   Generated checks.csv with 10,002 rows.
+#   Preview: 2 rows shown, 10,000 hidden.
+# artifact: checks.csv
+```
 
 审批是 key-value 原子。大 artifact 只展示摘要和稳定引用，不把完整数据塞进聊天正文。
 
@@ -245,7 +361,20 @@ Partial assistant prose...
 
 **改造后**
 
-![After: Non-TTY and NDJSON Event Mode](./assets/readme-after/agent-events-after.png?v=readable-20260623)
+```diff
+# Assistant: thinking started
+@@ Tool shell: running command="go test ./internal/cache" @@
+- Tool shell: fail exit=1 duration_ms=2300
+# Assistant: failing test is internal/cache TestEvict/expired
+```
+
+```json
+{"type":"turn.start","role":"user","message":"Find the failing test."}
+{"type":"thinking.start","status":"running"}
+{"type":"tool.start","tool_name":"shell","call_id":"c1","status":"running"}
+{"type":"tool.end","tool_name":"shell","call_id":"c1","status":"fail","exit_code":1}
+{"type":"turn.end","role":"assistant","status":"pass"}
+```
 
 非 TTY 下不保留 live UI、光标控制、动画、边框或 raw ANSI。机器事件使用稳定 type。
 
@@ -260,6 +389,9 @@ Partial assistant prose...
 ```text
 CLI-output-design/
 ├── SKILL.md
+├── assets/
+│   ├── ordinary-cli-before-after.png
+│   └── agent-chat-tui-before-after.png
 └── references/
     ├── color.md
     ├── symbols.md

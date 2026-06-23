@@ -72,7 +72,9 @@ When these conflict, the earlier lens wins. A pretty layout never justifies a wr
 
 The README shows a few representative cases. The PNG gallery after these examples carries
 the full 24-case visual reference. In the examples below, `Before` and `After` are split;
-`After` is rendered as a 1024px PNG so semantic colors remain visible in README renderers.
+`After` uses GitHub-native syntax highlighting so the examples stay text, not screenshots.
+In `diff` fences, leading `+`, `-`, `!`, `#`, and `@@` are README highlighting markers, not
+required CLI output. For exact terminal-like colors and spacing, use the full gallery images.
 
 ### 1. Errors That Guide
 
@@ -85,7 +87,21 @@ Error: failed
 
 **After**
 
-![After: Errors That Guide](./assets/readme-after/ordinary-errors-after.png?v=readable-20260623)
+```diff
+- ✗ error: missing required flag --env
+
+# Usage:
+#   mycli deploy --env <name>
+
+# Next:
+#   mycli deploy --env staging
+
+- ✗ error: config not found
+
+# Reason: no myapp.toml in this directory
+# Next:
+#   myapp init
+```
 
 ### 2. Semantic Color, Progress, and Result State
 
@@ -102,7 +118,20 @@ Ran tests. Some failed. Lots of log output...
 
 **After**
 
-![After: Semantic Color, Progress, and Result State](./assets/readme-after/ordinary-progress-after.png?v=readable-20260623)
+```diff
+# Run mycli cache clear to remove local cache.
+# Docs:
+#   https://example.com/docs/cache
+
+@@ model.bin  [████████████░░░░] 74%  3.8/5.1 MB  (1.2 MB/s) eta 1s @@
++ ✓ pass downloaded model.bin (5.1 MB) in 4.2s
+
++ ✓ pass 142
+- ✗ fail 1
+# ⊘ skip 3        4.2s
+- ✗ fail internal/cache: TestEvict/expired
+#     cache_test.go:88: expected 0 entries, got 1
+```
 
 ### 3. Data Shapes and Diagnostics
 
@@ -126,7 +155,26 @@ line 14 print(cfg) used after move
 
 **After**
 
-![After: Data Shapes and Diagnostics](./assets/readme-after/ordinary-data-after.png?v=readable-20260623)
+```diff
+# NUMBER  TITLE                STATE   UPDATED
+#128    Fix color fallback   open    2h ago
+#127    Bump deps            merged  1d ago
+
+@@ Pull request #128                                  open @@
+#   Title     Fix color fallback
+#   Author    zw
+#   Branch    fix-color -> main
++   Checks    ✓ pass 4
+#   Files     6 changed (+128 -34)
+
+- error[E0382]: borrow of moved value: cfg
+#    ┌─ src/main.go:14:9
+# 12 │   load(cfg)
+!    │        --- value moved here
+# 14 │   print(cfg)
+-    │         ^^^ value used after move
+#    = help: clone cfg before load()
+```
 
 ### 4. Runtime Contracts and Redaction
 
@@ -160,7 +208,36 @@ connected with token sk-live-123456
 
 **After**
 
-![After: Runtime Contracts and Redaction](./assets/readme-after/ordinary-runtime-after.png?v=readable-20260623)
+```json
+{
+  "schema_version": "1",
+  "ok": false,
+  "duration_ms": 412,
+  "checks": [
+    {
+      "name": "config_file",
+      "status": "fail",
+      "message": "not configured",
+      "next_steps": [
+        { "command": "mycli config init", "reason": "create config" }
+      ]
+    }
+  ]
+}
+```
+
+```diff
+# NAME        STATUS
+! 配置文件    missing
++ gateway     pass
+
++ ✓ pass connected
+#   token: [redacted]
+
+# NO_COLOR fallback:
+# pass connected
+# token: [redacted]
+```
 
 ### More Ordinary CLI Cases
 
@@ -194,7 +271,19 @@ You: explain this error and suggest the smallest fix
 
 **After**
 
-![After: Transcript roles and input composer](./assets/readme-after/agent-transcript-after.png?v=readable-20260623)
+```diff
+@@ ▌ You @@
+#   How do I reset the cache?
+
+@@ ▌ Assistant @@
+#   Run mycli cache clear.
+
+@@ ❯ You  explain this error and suggest the smallest fix @@
+
+# Submitted transcript:
+@@ ▌ You @@
+#   explain this error and suggest the smallest fix
+```
 
 The live draft is not transcript history. Cursor movement, deletion, suggestions, and IME
 composition are input UI until the user submits.
@@ -213,7 +302,18 @@ raw output mixed into assistant prose
 
 **After**
 
-![After: Thinking and Tool Use](./assets/readme-after/agent-tool-after.png?v=readable-20260623)
+```diff
+@@ ◐ thinking @@
+# ∴ thinking inspected 4 files; running tests next
++ ✓ thinking pass 8s
+
+@@ ◐ ⚙ shell running @@
+#   ⎿ command: go test ./internal/cache
+
+- ✗ ⚙ shell fail 2.3s
+#   ⎿ exit: 1
+#   ⎿ output: cache_test.go:88: expected 0 entries, got 1
+```
 
 Never expose hidden chain-of-thought. Show concise observable summaries and bounded tool
 results with terminal state.
@@ -236,7 +336,25 @@ LATER task sync-42 queued
 
 **After**
 
-![After: Approvals, Background Work, and Artifacts](./assets/readme-after/agent-approval-after.png?v=readable-20260623)
+```diff
+! approval required
+#   title: Delete stale branches
+!   risk: high
+#   changes: 12 branches
+#   next: approve with y, deny with n
+
+# Approve? [y/N]
+
+! ⚠ warning: tool output truncated to 200 lines
+- ✗ error: command failed with exit 2
+# timer: retrying in 30s
+# background: task queued · id=sync-42
+
+@@ ▌ Assistant @@
+#   Generated checks.csv with 10,002 rows.
+#   Preview: 2 rows shown, 10,000 hidden.
+# artifact: checks.csv
+```
 
 Approvals are decision atoms. Large artifacts get summaries and stable references, not full
 data dumps in the transcript.
@@ -257,7 +375,20 @@ Partial assistant prose...
 
 **After**
 
-![After: Non-TTY and NDJSON Event Mode](./assets/readme-after/agent-events-after.png?v=readable-20260623)
+```diff
+# Assistant: thinking started
+@@ Tool shell: running command="go test ./internal/cache" @@
+- Tool shell: fail exit=1 duration_ms=2300
+# Assistant: failing test is internal/cache TestEvict/expired
+```
+
+```json
+{"type":"turn.start","role":"user","message":"Find the failing test."}
+{"type":"thinking.start","status":"running"}
+{"type":"tool.start","tool_name":"shell","call_id":"c1","status":"running"}
+{"type":"tool.end","tool_name":"shell","call_id":"c1","status":"fail","exit_code":1}
+{"type":"turn.end","role":"assistant","status":"pass"}
+```
 
 Off-TTY output removes live UI, cursor tricks, frames, animation, hidden role state, and
 raw ANSI. Machine streams use stable event types.
@@ -277,6 +408,9 @@ fallback, and NDJSON event mode.
 ```text
 CLI-output-design/
 ├── SKILL.md
+├── assets/
+│   ├── ordinary-cli-before-after.png
+│   └── agent-chat-tui-before-after.png
 └── references/
     ├── color.md
     ├── symbols.md
