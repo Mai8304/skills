@@ -39,15 +39,17 @@ contract:
 ## Theme and terminal boundary
 
 Use ANSI-16 named colors so the user's terminal theme controls contrast. Do not assume a
-dark background; avoid hardcoded hex colors, background fills, and low-contrast dim-only
-states. Every role/state must survive with color disabled.
+dark background; avoid hardcoded hex colors, hardcoded background fills, and low-contrast
+dim-only states. The user draft/submitted-user background row is the explicit TTY exception:
+it must be theme-adaptive and disappear in plain fallback. Every role/state must survive
+with color disabled.
 
 Default theme mapping:
 
 | Atom | TTY style | Fallback |
 |---|---|---|
-| user role / current input accent | cyan label or gutter | `You:` |
-| assistant role | default text, optional bold label | `Assistant:` |
+| user draft / submitted user turn | subtle theme-adaptive background row + `›` prompt | `You:` |
+| assistant turn | green `●` marker + text | `Assistant:` |
 | system / tool metadata | dim/default label | `System:` / `Tool:` |
 | tool name / command / path / URL / function / formula | cyan technical token | raw copyable token |
 | warning / deprecation | yellow + `⚠` + word | `warning:` / `deprecated:` |
@@ -95,17 +97,26 @@ stable for logs and machine events.
 Base transcript shape:
 
 ```text
-▌ You
-  How do I reset the cache?
+› How do I reset the cache?
 
-▌ Assistant
-  Run `mycli cache clear`.
+● Run `mycli cache clear`.
 ```
+
+The fenced examples show the copyable text shape; in an interactive TTY the user row is
+rendered on a subtle full-width background block.
 
 Rules:
 
-- The role label carries the turn identity; color and gutter are redundant enhancements.
-- Use hanging indent for multiline turns. Do not prefix every assistant line with a noisy
+- In an interactive TTY, submitted user turns use the same visual atom as the draft:
+  a subtle theme-adaptive background row, `›`, one space, then the user's exact text.
+  The background row should be taller than the text line so the input feels like an active
+  composer surface, not just colored text.
+- Assistant turns use a green `●` marker, one space, then assistant text. Do not prefix
+  them with `Assistant`, `Home Agent`, or a model/provider name in the interactive
+  transcript lane.
+- Align symbols and content consistently: the user `›` and assistant `●` occupy the same
+  marker column; the first content character begins in the same text column. Multiline
+  assistant output uses hanging indent under the first content character, not under the
   marker.
 - Keep user-submitted content exact. Do not recolor code, paths, or quotes in a way that
   changes copy/paste semantics.
@@ -116,7 +127,14 @@ Rules:
 
 The draft composer is live UI, not transcript history.
 
-- Show a clear prompt/cursor anchor such as `❯` or `>` plus an optional role label.
+- Show the draft as a full-width, subtle background row with `›`, one space, then the
+  draft text. Omit `You` in the interactive composer.
+- The row background is a TTY-only affordance: use the terminal theme's existing surface
+  color or reverse-video-like styling; do not hardcode dark-only colors. In non-TTY,
+  logs, and persisted transcripts, remove the background.
+- Keep the row height visibly higher than the glyph height when the TUI owns the draw
+  surface. If the terminal renderer only supports character cells, preserve the `› text`
+  shape and avoid fake box characters.
 - Let the terminal's native cursor and selection do the work. Do not invent a fake cursor in
   persisted logs.
 - Deletion, editing, history navigation, and paste update the draft in place; they should not
@@ -133,27 +151,32 @@ The draft composer is live UI, not transcript history.
   bytes. If the TUI provides custom selection, persisted logs still use plain text.
 - Autocomplete, slash commands, file mentions, and history suggestions are suggestion atoms;
   they must be visually secondary and disappear from the submitted transcript unless chosen.
-- Submitted input collapses into a transcript turn with the `You` label.
+- Submitted input collapses into the same `› text` row shape in the interactive transcript.
+  Persisted logs and non-TTY fallback still use `You:` so identity is not lost.
 - Passwords, secrets, tokens, and credentials are redacted before they enter transcript,
   logs, screenshots, or machine events.
 
 Example draft:
 
 ```text
-❯ You  summarize src/cache.go and include edge cases
+› summarize src/cache.go and include edge cases
 ```
 
 After submit:
 
 ```text
-▌ You
-  summarize src/cache.go and include edge cases
+› summarize src/cache.go and include edge cases
 ```
 
 ## Assistant output atoms
 
 Assistant output streams as readable prose with minimal chrome.
 
+- Render the assistant's visible turn as `● ` plus text in the interactive transcript lane.
+  The dot is green in TTY and plain in fallback; do not show `▌ Home Agent`, provider names,
+  or model names as the per-message prefix.
+- For multiline assistant output, continuation lines align under the first text character:
+  two spaces before the continuation when the marker column is one cell wide.
 - Before the first token, show a TTY-only thinking/running atom if latency would otherwise
   look broken.
 - Once tokens stream, stop the spinner or move it to a quiet status line. Do not animate
@@ -172,18 +195,27 @@ thought. If the product exposes reasoning summaries, label them as summaries.
 Recommended atoms:
 
 ```text
-◐ thinking
-∴ thinking  inspected 4 files; next checking tests
-✓ thinking  8s
+▸ USER.md might be in the memory store but not as a regular file. Let me check from my memory. I know it says:
+│  - 老家在厦门（福建省）
+│  - 喜欢吃北京烤鸭
+│  - 喜欢香港迪士尼乐园
+│  - 目前在北京
+│
+│  Let me check memory to see how USER.md is stored.
 ```
 
 Rules:
 
-- `◐ ◒ ◑ ◓` are optional lightweight TTY spinner frames for agent-chat surfaces. Braille
-  spinner frames from `symbols.md` remain valid for ordinary progress.
+- `▸` marks an expanded thinking block in interactive agent-chat surfaces. It uses the same
+  marker column as `›` and `●`; the first thinking character begins in the same text column.
+  Continuation lines use `│` in the marker column so the block reads as a single
+  intermediate state.
+- `◐ ◒ ◑ ◓` remain valid for compact live thinking indicators before an expanded thinking
+  block or while waiting for the first visible token. Braille spinner frames from
+  `symbols.md` remain valid for ordinary progress.
 - Use `thinking`, `planning`, `waiting`, or `streaming` only when those states are true.
-- Collapse long internal activity into short summaries: `inspected files`, `waiting for
-  approval`, `running tests`.
+- Collapse long internal activity into bounded visible thinking blocks. Keep them readable,
+  wrap by display width, and avoid `⎿` child-result styling for thinking prose.
 - Do not reveal hidden chain-of-thought. Show summaries, plans, and observable actions.
 - Off-TTY, use discrete events: `thinking: started`, `thinking: inspected 4 files`,
   `thinking: pass`.
@@ -297,12 +329,10 @@ These are examples of atoms combined into useful shapes. They are not normative 
 Minimal streaming turn:
 
 ```text
-▌ You
-  Find the failing test and propose the smallest fix.
+› Find the failing test and propose the smallest fix.
 
-▌ Assistant
-  ◐ thinking
-  I found one failing test in `internal/cache`.
+▸ Inspecting the failing test output and checking the smallest affected package.
+● I found one failing test in `internal/cache`.
 ```
 
 Tool call with bounded preview:
@@ -330,14 +360,13 @@ timer: next check at 23:00
 Good:
 
 ```text
-❯ You  explain this error and suggest the smallest fix
+› explain this error and suggest the smallest fix
 ```
 
 Submitted transcript:
 
 ```text
-▌ You
-  explain this error and suggest the smallest fix
+› explain this error and suggest the smallest fix
 ```
 
 Bad:
@@ -354,18 +383,18 @@ Why bad: draft cursor motion leaked into transcript history.
 Good:
 
 ```text
-❯ You  review this function:
-        ```go
-        func cacheKey(user string) string {
-          return strings.ToLower(user)
-        }
-        ```
+› review this function:
+  ```go
+  func cacheKey(user string) string {
+    return strings.ToLower(user)
+  }
+  ```
 ```
 
 Bad:
 
 ```text
-❯ You  review this function:
+› review this function:
 func cacheKey(user string) string {
 Assistant: I can help with that...
 ```
@@ -377,9 +406,13 @@ Why bad: paste was interpreted as submits before the user finished the draft.
 Good:
 
 ```text
-◐ thinking
-∴ thinking  inspected 4 files; running tests next
-✓ thinking  pass  8s
+▸ USER.md might be in the memory store but not as a regular file. Let me check from my memory. I know it says:
+│  - 老家在厦门（福建省）
+│  - 喜欢吃北京烤鸭
+│  - 喜欢香港迪士尼乐园
+│  - 目前在北京
+│
+│  Let me check memory to see how USER.md is stored.
 ```
 
 Bad:
