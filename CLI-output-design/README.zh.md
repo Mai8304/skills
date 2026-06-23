@@ -62,116 +62,68 @@ cp -r skills/CLI-output-design ~/.codex/skills/cli-output-design
 
 ## 普通 CLI：改造前 / 改造后
 
-下面的例子分两种：多数是 **同语义表现层改造**，即 Before 和 After 表达同一件事；少数是 **语义修复**，因为 Before 本身缺了必要信息。
-GitHub 的 Markdown 代码块以可复制为主，无法可靠表达完整终端配色；下面这张单列 PNG 是同一套规则的真实彩色渲染。
+README 主体只展示少数典型 case；完整 24 项视觉参考放在本节末尾的 2K 图片里。下面每个 case 都把改造前和改造后分开写，改造后用 README HTML 直接显示语义颜色。
 
-![Ordinary CLI Before / After](./assets/ordinary-cli-before-after.png)
+### 1. 会引导的错误
 
-这张单列图把普通 CLI 拆成 24 个输出原子：help、bad arguments、error、技术 token、进度、表格、对象详情、文件树、diff、内容块、嵌套任务、诊断、结果汇总、dry-run、空状态、日志、expressive notice、prompt、machine mode、CJK 宽度、pager、deprecation、中断、主题适配和 redaction。
-
-### 1. Help、参数错误、错误文案
+**改造前**
 
 ```text
-# 改造前
-Usage: mycli {init,deploy,status,destroy,config,auth,logs,doctor,completion} [options]
 Error: invalid
 Error: failed
-
-# 改造后
-USAGE
-  mycli deploy [--env <name>] [--dry-run]
-
-COMMANDS
-  init      Create a config file
-  deploy    Deploy the current project
-  status    Show deployment status
-
-OPTIONS
-  --env <name>    Target environment
-  --dry-run       Preview changes without applying them
-
-✗ error: missing required flag --env
-
-  Usage:
-    mycli deploy --env <name>
-
-  Next:
-    mycli deploy --env staging
-
-✗ error: config not found
-
-  Reason: no myapp.toml in this directory
-  Next:
-    myapp init
 ```
 
-好的错误不是“红一点”，而是说清楚发生了什么、为什么、下一步做什么。参数错误应该给相关 usage slice，并返回合适的 exit code。
+**改造后**
 
-### 2. 颜色、重点、URL、弃用提示
+<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto"><span style="color:#e67875">✗ error:</span> missing required flag <span style="color:#8bcac3">--env</span>
+
+  <span style="color:#777d80">Usage:</span>
+    <span style="color:#8bcac3">mycli deploy --env &lt;name&gt;</span>
+
+  <span style="color:#777d80">Next:</span>
+    <span style="color:#8bcac3">mycli deploy --env staging</span>
+
+<span style="color:#e67875">✗ error:</span> config not found
+
+  <span style="color:#777d80">Reason:</span> no <span style="color:#8bcac3">myapp.toml</span> in this directory
+  <span style="color:#777d80">Next:</span>
+    <span style="color:#8bcac3">myapp init</span></pre>
+
+错误不是“红一点”就够了；它必须说清楚原因、上下文和下一步。
+
+### 2. 语义颜色、进度和结果状态
+
+**改造前**
 
 ```text
-# 改造前
 Important: run mycli cache clear now
 See docs: https://example.com/docs/cache
-ERROR: --token is deprecated but command continued
-Replacement --auth-token
-Removal 2026-09-01
-authenticated pass
 
-# 改造后
-Run mycli cache clear to remove local cache.
-Docs:
-  https://example.com/docs/cache
-
-⚠ deprecated: --token is deprecated
-  Replacement: --auth-token
-  Removal:     2026-09-01
-
-✓ pass authenticated
-```
-
-颜色规则：
-
-- 红色只给当前失败，不给“重要”
-- 黄色给 warning / deprecated，并给 replacement
-- 青色给命令、flag、路径、URL、函数、公式等技术 token
-- dim 给时间戳、hint、metadata 等次要信息
-- URL 必须保留 raw URL，OSC 8 和 underline 只是 TTY 增强
-
-### 3. 进度、任务树、结果汇总
-
-```text
-# 改造前
 Downloading model.bin 3.8/5.1 MB 74% 1.2 MB/s eta 1s
 Downloaded model.bin 5.1 MB in 4.2s
-Deploy build pass 12.4s migrate running schema pass 0.8s seed data running
 Ran tests. Some failed. Lots of log output...
-
-# 改造后
-model.bin  [████████████░░░░] 74%  3.8/5.1 MB  (1.2 MB/s) eta 1s
-✓ pass downloaded model.bin (5.1 MB) in 4.2s
-
-◆ Deploy
-  ✓ pass build              12.4s
-  ⠙ running migrate
-    ✓ pass schema           0.8s
-    ⠙ running seed data
-  • queued smoke tests
-
-✓ pass 142   ✗ fail 1   ⊘ skip 3        4.2s
-
-  ✗ fail internal/cache: TestEvict/expired
-      cache_test.go:88: expected 0 entries, got 1
-
-FAIL  (1 of 146)
 ```
 
-知道总量才显示百分比；不知道总量就用 spinner 或 milestone。任何 spinner / progress bar 都必须落到 `pass` 或 `fail`，不能孤儿化。
+**改造后**
 
-### 4. 表格、对象详情、文件树、diff、内容块
+<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto">Run <span style="color:#8bcac3">mycli cache clear</span> to remove local cache.
+Docs:
+  <span style="color:#8bcac3">https://example.com/docs/cache</span>
+
+<span style="color:#8bcac3">model.bin</span>  [<span style="color:#8ecf8a">████████████</span><span style="color:#777d80">░░░░</span>] 74%  3.8/5.1 MB  (1.2 MB/s) eta 1s
+<span style="color:#8ecf8a">✓ pass</span> downloaded <span style="color:#8bcac3">model.bin</span> (5.1 MB) in 4.2s
+
+<span style="color:#8ecf8a">✓ pass 142</span>   <span style="color:#e67875">✗ fail 1</span>   <span style="color:#777d80">⊘ skip 3</span>        4.2s
+  <span style="color:#e67875">✗ fail</span> internal/cache: TestEvict/expired
+      cache_test.go:88: expected 0 entries, got 1</pre>
+
+红色给当前失败，绿色给通过，黄色给风险，青色给技术 token。进度必须诚实，并且必须落到终态。
+
+### 3. 数据形态和诊断
+
+**改造前**
 
 ```text
-# 改造前
 +--------+--------------------+--------+
 | NUMBER | TITLE              | STATE  |
 +--------+--------------------+--------+
@@ -181,108 +133,40 @@ FAIL  (1 of 146)
 ID TITLE AUTHOR BRANCH CHECKS FILES
 128 Fix color fallback open zw fix-color->main pass=4 files=6 +128 -34
 
-src/cli/main.go
-src/cli/render.go
-src/internal/color.go
-
-# 改造后
-NUMBER  TITLE                STATE   UPDATED
-#128    Fix color fallback   open    2h ago
-#127    Bump deps            merged  1d ago
-
-Pull request #128                                  open
-  Title     Fix color fallback
-  Author    zw
-  Branch    fix-color -> main
-  Checks    ✓ pass 4
-  Files     6 changed  (+128 -34)
-
-src/
-├── cli/
-│   ├── main.go
-│   └── render.go
-└── internal/
-    └── color.go
-
-src/config.go
-@@ -10,6 +10,7 @@
-  ctx := context.Background()
-- log.Print("start")
-+ log.Info("start", "version", v)
-
-note: configuration file created
-
-  mycli config set api.url https://api.example.com
-
-Docs:
-  https://example.com/docs/config
-```
-
-同质多行用表格；单个对象用 key-value；TTY 可用树，pipe 下回到一行一个 path；diff 的 `+` / `-` 才是语义，颜色只是增强。
-
-### 5. 诊断、dry-run、选择、取消
-
-```text
-# 改造前
 error E0382 borrow of moved value cfg
 src/main.go line 14 column 9
 line 12 load(cfg) moved cfg
 line 14 print(cfg) used after move
-help clone cfg before load
-fail 3 errors warn 1
-
-Plan add web
-Plan change api image 1.2 to 1.3
-Plan destroy none
-Use --apply to execute
-
-Delete stuff? y/n
-Pick features:
-> auth
-> billing
-
-# 改造后
-error[E0382]: borrow of moved value: cfg
-   ┌─ src/main.go:14:9
-12 │   load(cfg)
-   │        --- value moved here
-14 │   print(cfg)
-   │         ^^^ value used after move
-   = help: clone cfg before load()
-
-fail 3 errors · warn 1
-
-Plan: 2 to add · 1 to change · 0 to destroy
-
-  + service "web"        will be created
-  ~ service "api"        image  1.2 -> 1.3
-
-Run with --apply to execute.
-
-This will delete 3 buckets and 1 database — cannot be undone:
-  - s3://logs-prod
-  - s3://logs-staging
-  - rds: analytics-primary
-
-Continue?  [y/N]
-
-? Select features   space toggle · enter confirm · esc cancel
-❯ [x] auth
-  [ ] billing
-  [x] analytics
-  2 selected
-
-■ cancelled: upload interrupted by user
-  Restored terminal state
-  Exit code: 130
 ```
 
-危险动作先展示影响范围，默认 No，并提供非交互方式。确认、单选、多选要有不同形状，不要把所有 prompt 都做成 `y/n`。
+**改造后**
 
-### 6. 机器模式、日志、pager、CJK、redaction
+<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto"><span style="color:#777d80">NUMBER  TITLE                STATE   UPDATED</span>
+#128    Fix color fallback   open    2h ago
+#127    Bump deps            merged  1d ago
+
+Pull request <span style="color:#8bcac3">#128</span>                                  open
+  Title     Fix color fallback
+  Author    zw
+  Branch    <span style="color:#8bcac3">fix-color</span> -> <span style="color:#8bcac3">main</span>
+  Checks    <span style="color:#8ecf8a">✓ pass</span> 4
+  Files     6 changed (+128 -34)
+
+<span style="color:#e67875">error[E0382]:</span> borrow of moved value: <span style="color:#8bcac3">cfg</span>
+   <span style="color:#777d80">┌─ src/main.go:14:9</span>
+12 │   load(cfg)
+   │        <span style="color:#e5c069">--- value moved here</span>
+14 │   print(cfg)
+   │         <span style="color:#e67875">^^^ value used after move</span>
+   = help: clone <span style="color:#8bcac3">cfg</span> before load()</pre>
+
+同质数据用表格，单个对象用 key-value，诊断要能被人和工具同时读取。
+
+### 4. 机器契约和敏感信息
+
+**改造前**
 
 ```text
-# 改造前
 Checking...
 {
   "schema_version": "1",
@@ -306,16 +190,18 @@ NAME      STATUS
 gateway   pass
 
 connected with token sk-live-123456
+```
 
-# 改造后
-{
+**改造后**
+
+<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto">{
   "schema_version": "1",
   "ok": false,
   "duration_ms": 412,
   "checks": [
     {
       "name": "config_file",
-      "status": "fail",
+      "status": "<span style="color:#e67875">fail</span>",
       "message": "not configured",
       "next_steps": [
         { "command": "mycli config init", "reason": "create config" }
@@ -324,164 +210,92 @@ connected with token sk-live-123456
   ]
 }
 
-NAME        STATUS
-配置文件    missing
-gateway     pass
+<span style="color:#777d80">NAME        STATUS</span>
+配置文件    <span style="color:#e5c069">missing</span>
+gateway     <span style="color:#8ecf8a">pass</span>
 
-✓ pass connected
-  token: [redacted]
+<span style="color:#8ecf8a">✓ pass</span> connected
+  token: <span style="color:#777d80">[redacted]</span>
 
-NO_COLOR fallback:
+<span style="color:#777d80">NO_COLOR fallback:</span>
 pass connected
 token: [redacted]
+</pre>
 
-Pager:
-  TTY       long output can page, with position and quit hint
-  pipe/CI   no pager, no prompts, stream all rows
-```
+机器模式是契约，不能混进 ANSI、spinner、提示性 prose 或不稳定字段；secret 必须先 redaction。
 
-机器模式是契约，不是“带 JSON 的人类输出”。不能有 ANSI、spinner、cursor code、提示性 prose 或不稳定字段。
+### 更多普通 CLI 例子
+
+完整 2K 图覆盖 24 个普通 CLI 输出原子：help、bad arguments、error、技术 token、进度、表格、对象详情、文件树、diff、内容块、嵌套任务、诊断、结果汇总、dry-run、空状态、日志、expressive notice、prompt、machine mode、CJK 宽度、pager、deprecation、中断、主题适配和 redaction。
+
+![Ordinary CLI Before / After](./assets/ordinary-cli-before-after.png)
 
 ## Agent Chat TUI：改造前 / 改造后
 
 Agent Chat 和普通 CLI 输出不同。它有 live input、transcript、assistant 流式输出、thinking、tools、approval、choice、background task、subagent、artifact 和机器事件。这个 skill 定义的是可组合原子，不是某个具体产品的一整套 UI 模板。
 
-![Agent Chat TUI Before / After](./assets/agent-chat-tui-before-after.png)
-
-这张单列图把 Agent Chat 拆成 16 组 TUI 原子：transcript role、输入草稿、多行粘贴、IME/CJK、assistant streaming、thinking summary、tool use、tool result、choice、approval、alert、timer、background task、subagent、主题适配、suggestion、file mention、cancel、approval outcome、artifact、plain non-TTY fallback 和 NDJSON event mode。
+README 只放典型 case；完整 16 组 TUI 对比放在本节末尾图片中。
 
 ### 1. 角色、输入草稿、提交后的 transcript
 
+**改造前**
+
 ```text
-# 改造前
 User: how do I reset the cache?
 Bot: Run mycli cache clear.
 You: explain this er█
 You: explain this error and suggest the smallest fix
+```
 
-# 改造后
-▌ You
+**改造后**
+
+<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto"><span style="color:#8bcac3">▌ You</span>
   How do I reset the cache?
 
-▌ Assistant
-  Run mycli cache clear.
+<span style="color:#f4f1ea">▌ Assistant</span>
+  Run <span style="color:#8bcac3">mycli cache clear</span>.
 
-❯ You  explain this error and suggest the smallest fix
+<span style="color:#8bcac3">❯ You</span>  explain this error and suggest the smallest fix
 
-Submitted transcript:
-▌ You
+<span style="color:#777d80">Submitted transcript:</span>
+<span style="color:#8bcac3">▌ You</span>
   explain this error and suggest the smallest fix
-```
+</pre>
 
 输入草稿是 live UI，不是历史记录。光标移动、删除、候选项、IME 组合态都不能污染 transcript。
 
-### 2. 多行粘贴、slash command、文件引用、CJK
+### 2. Thinking 和 Tool Use
+
+**改造前**
 
 ```text
-# 改造前
-❯ You review this function:
-func cacheKey(user string) string {
-Assistant: I can help with that...
-
-You: /re
-Assistant: did you mean /review?
-
-# 改造后
-❯ You  review this function:
-        ```go
-        func cacheKey(user string) string {
-          return strings.ToLower(user)
-        }
-        ```
-
-IME/CJK:
-  compose first, submit only final text, align by display width
-
-❯ You  /re
-  /review   review selected files
-  /reset    clear conversation state
-
-❯ You  review @src/render.go
-
-Submitted transcript:
-review @src/render.go
-```
-
-autocomplete、slash command、file mention 都是输入提示原子。只有用户确认后，它们才进入 transcript。
-
-### 3. Streaming 和 thinking
-
-```text
-# 改造前
 thinking thinking thinking
-I found the failing test in internal/cache.
-thinking
-The smallest fix is to clear expired entries before counting.
-I am thinking step by step about every hidden inference...
-
-# 改造后
-◐ thinking
-
-▌ Assistant
-  I found the failing test in internal/cache.
-  The smallest fix is to clear expired entries before counting.
-
-◐ thinking
-∴ thinking  inspected 4 files; running tests next
-✓ thinking  pass  8s
-```
-
-不要展示 hidden chain-of-thought。可以展示的是简短、可观察的 thinking summary，例如看了几个文件、下一步要跑测试。
-
-### 4. Tool use、subagent、artifact
-
-```text
-# 改造前
 Running shell: go test ./internal/cache
 exit 1 after 2.3s
 cache_test.go:88: expected 0 entries, got 1
 raw output mixed into assistant prose
-
-agent researcher running
-task inspect parser edge cases
-agent researcher pass in 1m12s
-found 3 relevant files
-
-Assistant:
-Here is the CSV:
-id,name,status
-1,api,pass
-2,cache,warn
-... 10,000 more rows ...
-
-# 改造后
-◐ ⚙ shell  running
-  ⎿ command: go test ./internal/cache
-
-✗ ⚙ shell  fail  2.3s
-  ⎿ exit: 1
-  ⎿ output: cache_test.go:88: expected 0 entries, got 1
-
-◐ agent researcher  running
-  ⎿ task: inspect parser edge cases
-
-✓ agent researcher  pass  1m12s
-  ⎿ found: 3 relevant files
-
-▌ Assistant
-  Generated checks.csv with 10,002 rows.
-  Preview: 2 rows shown, 10,000 hidden.
-
-artifact: checks.csv
-machine: {"type":"artifact.created","name":"checks.csv","rows":10002}
 ```
 
-Tool 要有名字、状态、参数摘要、受限输出和终态。Subagent 是 nested actor，不要把第二段完整 transcript 倒进主对话。大 artifact 用摘要和稳定引用，不把上万行塞进聊天正文。
+**改造后**
 
-### 5. 选择、审批、提醒、后台任务、取消
+<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto"><span style="color:#8bcac3">◐ thinking</span>
+<span style="color:#777d80">∴ thinking</span> inspected 4 files; running tests next
+<span style="color:#8ecf8a">✓ thinking pass</span> 8s
+
+<span style="color:#8bcac3">◐ ⚙ shell</span> running
+  <span style="color:#777d80">⎿ command:</span> <span style="color:#8bcac3">go test ./internal/cache</span>
+
+<span style="color:#e67875">✗ ⚙ shell</span> fail 2.3s
+  <span style="color:#777d80">⎿ exit:</span> 1
+  <span style="color:#777d80">⎿ output:</span> cache_test.go:88: expected 0 entries, got 1</pre>
+
+不要展示 hidden chain-of-thought。可以展示可观察摘要和受限 tool 输出。
+
+### 3. 审批、后台任务和 artifact
+
+**改造前**
 
 ```text
-# 改造前
 DELETE EVERYTHING? y/n
 approval: no
 approval: yes
@@ -491,63 +305,64 @@ WARNING output too long
 ERROR command failed exit 2
 WAIT retrying in 30 seconds
 LATER task sync-42 queued
+```
 
-# 改造后
-approval required
+**改造后**
+
+<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto">approval required
   title: Delete stale branches
-  risk: high
+  risk: <span style="color:#e5c069">high</span>
   changes: 12 branches
   next: approve with y, deny with n
 
 Approve? [y/N]
 
-{"type":"approval.result","decision":"approve","request_id":"a1"}
-{"type":"approval.result","decision":"deny","request_id":"a2"}
-{"type":"approval.result","decision":"cancel","request_id":"a3"}
-{"type":"approval.result","decision":"edit","request_id":"a4"}
-
-⚠ warning: tool output truncated to 200 lines
-✗ error: command failed with exit 2
+<span style="color:#e5c069">⚠ warning:</span> tool output truncated to 200 lines
+<span style="color:#e67875">✗ error:</span> command failed with exit 2
 timer: retrying in 30s
-background: task queued · id=sync-42
+background: task queued · id=<span style="color:#8bcac3">sync-42</span>
 
-■ cancelled by user
-  turn: current
-  cursor: restored
-  exit: 130
-```
+<span style="color:#f4f1ea">▌ Assistant</span>
+  Generated <span style="color:#8bcac3">checks.csv</span> with 10,002 rows.
+  Preview: 2 rows shown, 10,000 hidden.
+<span style="color:#777d80">artifact:</span> checks.csv</pre>
 
-审批不是一个必须加框的大卡片，而是一组 key-value 原子。`approve`、`deny`、`cancel`、`edit` 必须区分，不能都压成 yes/no。
+审批是 key-value 原子。大 artifact 只展示摘要和稳定引用，不把完整数据塞进聊天正文。
 
-### 6. 非 TTY、纯文本 fallback、NDJSON
+### 4. 非 TTY 和 NDJSON 事件
+
+**改造前**
 
 ```text
-# 改造前
 \x1b[?25lAssistant thinking\r
 \x1b[36mTool shell running go test ./internal/cache\x1b[0m
 Tool shell fail exit=1 duration_ms=2300
-failing test is internal/cache TestEvict/expired
 Thinking...
 {"tool":"shell"}
 Done!
 Partial assistant prose...
+```
 
-# 改造后：plain fallback
-Assistant: thinking started
-Tool shell: running command="go test ./internal/cache"
+**改造后**
+
+<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto">Assistant: thinking started
+Tool shell: running command=<span style="color:#8bcac3">"go test ./internal/cache"</span>
 Tool shell: fail exit=1 duration_ms=2300
 Assistant: failing test is internal/cache TestEvict/expired
 
-# 改造后：NDJSON
 {"type":"turn.start","role":"user","message":"Find the failing test."}
 {"type":"thinking.start","status":"running"}
 {"type":"tool.start","tool_name":"shell","call_id":"c1","status":"running"}
 {"type":"tool.end","tool_name":"shell","call_id":"c1","status":"fail","exit_code":1}
-{"type":"message.delta","role":"assistant","text":"I found one failing test"}
-{"type":"turn.end","role":"assistant","status":"pass"}
-```
+{"type":"turn.end","role":"assistant","status":"pass"}</pre>
 
-离开 TTY 后，live UI 全部消失：不保留动画帧、光标控制、隐藏角色状态、边框、下划线或 raw ANSI。机器事件使用稳定 type。
+非 TTY 下不保留 live UI、光标控制、动画、边框或 raw ANSI。机器事件使用稳定 type。
+
+### 更多 Agent Chat TUI 例子
+
+完整 2K 图覆盖 16 组 Agent Chat TUI：transcript role、输入草稿、多行粘贴、IME/CJK、assistant streaming、thinking summary、tool use、tool result、choice、approval、alert、timer、background task、subagent、主题适配、suggestion、file mention、cancel、approval outcome、artifact、plain non-TTY fallback 和 NDJSON event mode。
+
+![Agent Chat TUI Before / After](./assets/agent-chat-tui-before-after.png)
 
 ## 文件结构
 

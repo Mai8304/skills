@@ -70,121 +70,66 @@ When these conflict, the earlier lens wins. A pretty layout never justifies a wr
 
 ## Before / after: ordinary CLI
 
-The examples below keep the same semantics wherever possible. A few examples are
-**semantic repairs**: the Before output lost required information, and the After restores it.
-GitHub Markdown code blocks are intentionally copyable plain text; the single-column PNG
-gallery below is the canonical colored rendering of the same design rules.
+The README shows a few representative cases. The PNG gallery after these examples carries
+the full 24-case visual reference. In the examples below, `Before` and `After` are split so
+the improved output can use real semantic color in README-rendered HTML.
 
-![Ordinary CLI Before / After](./assets/ordinary-cli-before-after.png)
+### 1. Errors That Guide
 
-This single-column gallery expands the ordinary CLI surface into 24 output atoms: help, bad arguments,
-errors, technical-token emphasis, progress, tables, object details, file trees, diffs,
-content blocks, nested tasks, diagnostics, result summaries, dry-run previews, empty
-states, logs, expressive notices, prompts, machine mode, CJK width, pager behavior,
-deprecations, interruption, theme adaptation, and redaction.
-
-### 1. Command surfaces: help, bad args, and actionable errors
+**Before**
 
 ```text
-# Before
-Usage: mycli {init,deploy,status,destroy,config,auth,logs,doctor,completion} [options]
 Error: invalid
 Error: failed
-
-# After
-USAGE
-  mycli deploy [--env <name>] [--dry-run]
-
-COMMANDS
-  init      Create a config file
-  deploy    Deploy the current project
-  status    Show deployment status
-
-OPTIONS
-  --env <name>    Target environment
-  --dry-run       Preview changes without applying them
-
-✗ error: missing required flag --env
-
-  Usage:
-    mycli deploy --env <name>
-
-  Next:
-    mycli deploy --env staging
-
-✗ error: config not found
-
-  Reason: no myapp.toml in this directory
-  Next:
-    myapp init
 ```
 
-### 2. Semantic color, attributes, URLs, and deprecations
+**After**
+
+<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto"><span style="color:#e67875">✗ error:</span> missing required flag <span style="color:#8bcac3">--env</span>
+
+  <span style="color:#777d80">Usage:</span>
+    <span style="color:#8bcac3">mycli deploy --env &lt;name&gt;</span>
+
+  <span style="color:#777d80">Next:</span>
+    <span style="color:#8bcac3">mycli deploy --env staging</span>
+
+<span style="color:#e67875">✗ error:</span> config not found
+
+  <span style="color:#777d80">Reason:</span> no <span style="color:#8bcac3">myapp.toml</span> in this directory
+  <span style="color:#777d80">Next:</span>
+    <span style="color:#8bcac3">myapp init</span></pre>
+
+### 2. Semantic Color, Progress, and Result State
+
+**Before**
 
 ```text
-# Before
 Important: run mycli cache clear now
 See docs: https://example.com/docs/cache
-ERROR: --token is deprecated but command continued
-Replacement --auth-token
-Removal 2026-09-01
-authenticated pass
 
-# After
-Run mycli cache clear to remove local cache.
-Docs:
-  https://example.com/docs/cache
-
-⚠ deprecated: --token is deprecated
-  Replacement: --auth-token
-  Removal:     2026-09-01
-
-✓ pass authenticated
-```
-
-Rules shown here:
-
-- use one technical-token accent for commands, flags, env vars, config keys, paths, URLs,
-  functions, and formulas
-- underline only links in interactive TTYs; keep raw URLs copyable
-- do not use red for deprecations unless the current command fails
-- do not use italic, underline, or strikethrough as generic emphasis
-
-### 3. Honest progress, task trees, and summaries
-
-```text
-# Before
 Downloading model.bin 3.8/5.1 MB 74% 1.2 MB/s eta 1s
 Downloaded model.bin 5.1 MB in 4.2s
-Deploy build pass 12.4s migrate running schema pass 0.8s seed data running
 Ran tests. Some failed. Lots of log output...
-
-# After
-model.bin  [████████████░░░░] 74%  3.8/5.1 MB  (1.2 MB/s) eta 1s
-✓ pass downloaded model.bin (5.1 MB) in 4.2s
-
-◆ Deploy
-  ✓ pass build              12.4s
-  ⠙ running migrate
-    ✓ pass schema           0.8s
-    ⠙ running seed data
-  • queued smoke tests
-
-✓ pass 142   ✗ fail 1   ⊘ skip 3        4.2s
-
-  ✗ fail internal/cache: TestEvict/expired
-      cache_test.go:88: expected 0 entries, got 1
-
-FAIL  (1 of 146)
 ```
 
-Progress is only visual when it can be honest. Spinners and bars are TTY-only and must end
-in a visible terminal state.
+**After**
 
-### 4. Data shapes: tables, details, trees, diffs, and content blocks
+<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto">Run <span style="color:#8bcac3">mycli cache clear</span> to remove local cache.
+Docs:
+  <span style="color:#8bcac3">https://example.com/docs/cache</span>
+
+<span style="color:#8bcac3">model.bin</span>  [<span style="color:#8ecf8a">████████████</span><span style="color:#777d80">░░░░</span>] 74%  3.8/5.1 MB  (1.2 MB/s) eta 1s
+<span style="color:#8ecf8a">✓ pass</span> downloaded <span style="color:#8bcac3">model.bin</span> (5.1 MB) in 4.2s
+
+<span style="color:#8ecf8a">✓ pass 142</span>   <span style="color:#e67875">✗ fail 1</span>   <span style="color:#777d80">⊘ skip 3</span>        4.2s
+  <span style="color:#e67875">✗ fail</span> internal/cache: TestEvict/expired
+      cache_test.go:88: expected 0 entries, got 1</pre>
+
+### 3. Data Shapes and Diagnostics
+
+**Before**
 
 ```text
-# Before
 +--------+--------------------+--------+
 | NUMBER | TITLE              | STATE  |
 +--------+--------------------+--------+
@@ -194,110 +139,38 @@ in a visible terminal state.
 ID TITLE AUTHOR BRANCH CHECKS FILES
 128 Fix color fallback open zw fix-color->main pass=4 files=6 +128 -34
 
-src/cli/main.go
-src/cli/render.go
-src/internal/color.go
-
-# After
-NUMBER  TITLE                STATE   UPDATED
-#128    Fix color fallback   open    2h ago
-#127    Bump deps            merged  1d ago
-
-Pull request #128                                  open
-  Title     Fix color fallback
-  Author    zw
-  Branch    fix-color -> main
-  Checks    ✓ pass 4
-  Files     6 changed  (+128 -34)
-
-src/
-├── cli/
-│   ├── main.go
-│   └── render.go
-└── internal/
-    └── color.go
-
-src/config.go
-@@ -10,6 +10,7 @@
-  ctx := context.Background()
-- log.Print("start")
-+ log.Info("start", "version", v)
-
-note: configuration file created
-
-  mycli config set api.url https://api.example.com
-
-Docs:
-  https://example.com/docs/config
-```
-
-Use tables for homogeneous rows, key-value blocks for one object, trees only in TTYs, and
-line-oriented fallbacks for pipes.
-
-### 5. Diagnostics, dry-run, prompts, and cancellation
-
-```text
-# Before
 error E0382 borrow of moved value cfg
 src/main.go line 14 column 9
 line 12 load(cfg) moved cfg
 line 14 print(cfg) used after move
-help clone cfg before load
-fail 3 errors warn 1
-
-Plan add web
-Plan change api image 1.2 to 1.3
-Plan destroy none
-Use --apply to execute
-
-Delete stuff? y/n
-Pick features:
-> auth
-> billing
-
-# After
-error[E0382]: borrow of moved value: cfg
-   ┌─ src/main.go:14:9
-12 │   load(cfg)
-   │        --- value moved here
-14 │   print(cfg)
-   │         ^^^ value used after move
-   = help: clone cfg before load()
-
-fail 3 errors · warn 1
-
-Plan: 2 to add · 1 to change · 0 to destroy
-
-  + service "web"        will be created
-  ~ service "api"        image  1.2 -> 1.3
-
-Run with --apply to execute.
-
-This will delete 3 buckets and 1 database — cannot be undone:
-  - s3://logs-prod
-  - s3://logs-staging
-  - rds: analytics-primary
-
-Continue?  [y/N]
-
-? Select features   space toggle · enter confirm · esc cancel
-❯ [x] auth
-  [ ] billing
-  [x] analytics
-  2 selected
-
-■ cancelled: upload interrupted by user
-  Restored terminal state
-  Exit code: 130
 ```
 
-Dangerous actions preview their blast radius, default to No, and have a non-interactive
-path. Prompt shape communicates cardinality: confirmation, single-select, or multi-select.
+**After**
 
-### 6. Runtime contracts: logs, pager, machine mode, CJK, redaction
+<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto"><span style="color:#777d80">NUMBER  TITLE                STATE   UPDATED</span>
+#128    Fix color fallback   open    2h ago
+#127    Bump deps            merged  1d ago
+
+Pull request <span style="color:#8bcac3">#128</span>                                  open
+  Title     Fix color fallback
+  Author    zw
+  Branch    <span style="color:#8bcac3">fix-color</span> -> <span style="color:#8bcac3">main</span>
+  Checks    <span style="color:#8ecf8a">✓ pass</span> 4
+  Files     6 changed (+128 -34)
+
+<span style="color:#e67875">error[E0382]:</span> borrow of moved value: <span style="color:#8bcac3">cfg</span>
+   <span style="color:#777d80">┌─ src/main.go:14:9</span>
+12 │   load(cfg)
+   │        <span style="color:#e5c069">--- value moved here</span>
+14 │   print(cfg)
+   │         <span style="color:#e67875">^^^ value used after move</span>
+   = help: clone <span style="color:#8bcac3">cfg</span> before load()</pre>
+
+### 4. Runtime Contracts and Redaction
+
+**Before**
 
 ```text
-# Before
 Checking...
 {
   "schema_version": "1",
@@ -321,16 +194,18 @@ NAME      STATUS
 gateway   pass
 
 connected with token sk-live-123456
+```
 
-# After
-{
+**After**
+
+<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto">{
   "schema_version": "1",
   "ok": false,
   "duration_ms": 412,
   "checks": [
     {
       "name": "config_file",
-      "status": "fail",
+      "status": "<span style="color:#e67875">fail</span>",
       "message": "not configured",
       "next_steps": [
         { "command": "mycli config init", "reason": "create config" }
@@ -339,24 +214,27 @@ connected with token sk-live-123456
   ]
 }
 
-NAME        STATUS
-配置文件    missing
-gateway     pass
+<span style="color:#777d80">NAME        STATUS</span>
+配置文件    <span style="color:#e5c069">missing</span>
+gateway     <span style="color:#8ecf8a">pass</span>
 
-✓ pass connected
-  token: [redacted]
+<span style="color:#8ecf8a">✓ pass</span> connected
+  token: <span style="color:#777d80">[redacted]</span>
 
-NO_COLOR fallback:
+<span style="color:#777d80">NO_COLOR fallback:</span>
 pass connected
 token: [redacted]
+</pre>
 
-Pager:
-  TTY       use pager only for long output; show position and quit hint
-  pipe/CI   no pager, no prompts, stream full rows
-```
+### More Ordinary CLI Cases
 
-Machine output is a contract. It must not contain ANSI, spinners, prose, hidden prompts, or
-unstable field names.
+The full 2K gallery covers 24 ordinary CLI atoms: help, bad arguments, errors,
+technical-token emphasis, progress, tables, object details, file trees, diffs, content
+blocks, nested tasks, diagnostics, summaries, dry-run previews, empty states, logs,
+expressive notices, prompts, machine mode, CJK width, pager behavior, deprecations,
+interruption, theme adaptation, and redaction.
+
+![Ordinary CLI Before / After](./assets/ordinary-cli-before-after.png)
 
 ## Before / after: Agent Chat TUI
 
@@ -365,148 +243,70 @@ streaming, thinking summaries, tool calls, choices, approvals, background work, 
 and machine-event fallbacks. The skill defines reusable atoms, not a product-specific full
 layout.
 
-![Agent Chat TUI Before / After](./assets/agent-chat-tui-before-after.png)
-
-This single-column gallery expands Agent Chat into 16 cards covering reusable TUI atoms: transcript roles, input draft,
-multiline paste, IME/CJK composition, assistant streaming, thinking summaries, tool use,
-tool results, choices, approvals, alerts, timers, background tasks, subagents, theme
-adaptation, suggestions, file mentions, cancellation, approval outcomes, artifacts,
-plain non-TTY fallback, and NDJSON event mode.
+The README shows representative cases first; the full gallery follows as more information.
 
 ### 1. Transcript roles and input composer
 
+**Before**
+
 ```text
-# Before
 User: how do I reset the cache?
 Bot: Run mycli cache clear.
 You: explain this er█
 You: explain this error and suggest the smallest fix
+```
 
-# After
-▌ You
+**After**
+
+<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto"><span style="color:#8bcac3">▌ You</span>
   How do I reset the cache?
 
-▌ Assistant
-  Run mycli cache clear.
+<span style="color:#f4f1ea">▌ Assistant</span>
+  Run <span style="color:#8bcac3">mycli cache clear</span>.
 
-❯ You  explain this error and suggest the smallest fix
+<span style="color:#8bcac3">❯ You</span>  explain this error and suggest the smallest fix
 
-Submitted transcript:
-▌ You
+<span style="color:#777d80">Submitted transcript:</span>
+<span style="color:#8bcac3">▌ You</span>
   explain this error and suggest the smallest fix
-```
+</pre>
 
 The live draft is not transcript history. Cursor movement, deletion, suggestions, and IME
 composition are input UI until the user submits.
 
-### 2. Multiline paste, suggestions, file mentions, and CJK
+### 2. Thinking and Tool Use
+
+**Before**
 
 ```text
-# Before
-❯ You review this function:
-func cacheKey(user string) string {
-Assistant: I can help with that...
-
-You: /re
-Assistant: did you mean /review?
-
-# After
-❯ You  review this function:
-        ```go
-        func cacheKey(user string) string {
-          return strings.ToLower(user)
-        }
-        ```
-
-IME/CJK:
-  compose first, submit only final text, align by display width
-
-❯ You  /re
-  /review   review selected files
-  /reset    clear conversation state
-
-❯ You  review @src/render.go
-
-Submitted transcript:
-review @src/render.go
-```
-
-Suggestions are atoms. They do not become transcript until accepted.
-
-### 3. Assistant streaming and thinking
-
-```text
-# Before
 thinking thinking thinking
-I found the failing test in internal/cache.
-thinking
-The smallest fix is to clear expired entries before counting.
-I am thinking step by step about every hidden inference...
-
-# After
-◐ thinking
-
-▌ Assistant
-  I found the failing test in internal/cache.
-  The smallest fix is to clear expired entries before counting.
-
-◐ thinking
-∴ thinking  inspected 4 files; running tests next
-✓ thinking  pass  8s
-```
-
-Never expose hidden chain-of-thought. Show concise summaries of observable work.
-
-### 4. Tools, subagents, and artifacts
-
-```text
-# Before
 Running shell: go test ./internal/cache
 exit 1 after 2.3s
 cache_test.go:88: expected 0 entries, got 1
 raw output mixed into assistant prose
-
-agent researcher running
-task inspect parser edge cases
-agent researcher pass in 1m12s
-found 3 relevant files
-
-Assistant:
-Here is the CSV:
-id,name,status
-1,api,pass
-2,cache,warn
-... 10,000 more rows ...
-
-# After
-◐ ⚙ shell  running
-  ⎿ command: go test ./internal/cache
-
-✗ ⚙ shell  fail  2.3s
-  ⎿ exit: 1
-  ⎿ output: cache_test.go:88: expected 0 entries, got 1
-
-◐ agent researcher  running
-  ⎿ task: inspect parser edge cases
-
-✓ agent researcher  pass  1m12s
-  ⎿ found: 3 relevant files
-
-▌ Assistant
-  Generated checks.csv with 10,002 rows.
-  Preview: 2 rows shown, 10,000 hidden.
-
-artifact: checks.csv
-machine: {"type":"artifact.created","name":"checks.csv","rows":10002}
 ```
 
-Tool output is bounded, labeled, and has terminal state. Subagents summarize; they do not
-dump a second full transcript into the main chat.
+**After**
 
-### 5. Choices, approvals, alerts, timers, and cancellation
+<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto"><span style="color:#8bcac3">◐ thinking</span>
+<span style="color:#777d80">∴ thinking</span> inspected 4 files; running tests next
+<span style="color:#8ecf8a">✓ thinking pass</span> 8s
+
+<span style="color:#8bcac3">◐ ⚙ shell</span> running
+  <span style="color:#777d80">⎿ command:</span> <span style="color:#8bcac3">go test ./internal/cache</span>
+
+<span style="color:#e67875">✗ ⚙ shell</span> fail 2.3s
+  <span style="color:#777d80">⎿ exit:</span> 1
+  <span style="color:#777d80">⎿ output:</span> cache_test.go:88: expected 0 entries, got 1</pre>
+
+Never expose hidden chain-of-thought. Show concise observable summaries and bounded tool
+results with terminal state.
+
+### 3. Approvals, Background Work, and Artifacts
+
+**Before**
 
 ```text
-# Before
 DELETE EVERYTHING? y/n
 approval: no
 approval: yes
@@ -516,65 +316,70 @@ WARNING output too long
 ERROR command failed exit 2
 WAIT retrying in 30 seconds
 LATER task sync-42 queued
+```
 
-# After
-approval required
+**After**
+
+<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto">approval required
   title: Delete stale branches
-  risk: high
+  risk: <span style="color:#e5c069">high</span>
   changes: 12 branches
   next: approve with y, deny with n
 
 Approve? [y/N]
 
-{"type":"approval.result","decision":"approve","request_id":"a1"}
-{"type":"approval.result","decision":"deny","request_id":"a2"}
-{"type":"approval.result","decision":"cancel","request_id":"a3"}
-{"type":"approval.result","decision":"edit","request_id":"a4"}
-
-⚠ warning: tool output truncated to 200 lines
-✗ error: command failed with exit 2
+<span style="color:#e5c069">⚠ warning:</span> tool output truncated to 200 lines
+<span style="color:#e67875">✗ error:</span> command failed with exit 2
 timer: retrying in 30s
-background: task queued · id=sync-42
+background: task queued · id=<span style="color:#8bcac3">sync-42</span>
 
-■ cancelled by user
-  turn: current
-  cursor: restored
-  exit: 130
-```
+<span style="color:#f4f1ea">▌ Assistant</span>
+  Generated <span style="color:#8bcac3">checks.csv</span> with 10,002 rows.
+  Preview: 2 rows shown, 10,000 hidden.
+<span style="color:#777d80">artifact:</span> checks.csv</pre>
 
-Approvals are decision atoms. `approve`, `deny`, `cancel`, and `edit` remain distinct in
-human output and machine events.
+Approvals are decision atoms. Large artifacts get summaries and stable references, not full
+data dumps in the transcript.
 
-### 6. Non-TTY and NDJSON event mode
+### 4. Non-TTY and NDJSON Event Mode
+
+**Before**
 
 ```text
-# Before
 \x1b[?25lAssistant thinking\r
 \x1b[36mTool shell running go test ./internal/cache\x1b[0m
 Tool shell fail exit=1 duration_ms=2300
-failing test is internal/cache TestEvict/expired
 Thinking...
 {"tool":"shell"}
 Done!
 Partial assistant prose...
+```
 
-# After: plain fallback
-Assistant: thinking started
-Tool shell: running command="go test ./internal/cache"
+**After**
+
+<pre style="background:#101214;color:#f4f1ea;padding:16px;border-radius:8px;overflow-x:auto">Assistant: thinking started
+Tool shell: running command=<span style="color:#8bcac3">"go test ./internal/cache"</span>
 Tool shell: fail exit=1 duration_ms=2300
 Assistant: failing test is internal/cache TestEvict/expired
 
-# After: NDJSON
 {"type":"turn.start","role":"user","message":"Find the failing test."}
 {"type":"thinking.start","status":"running"}
 {"type":"tool.start","tool_name":"shell","call_id":"c1","status":"running"}
 {"type":"tool.end","tool_name":"shell","call_id":"c1","status":"fail","exit_code":1}
-{"type":"message.delta","role":"assistant","text":"I found one failing test"}
-{"type":"turn.end","role":"assistant","status":"pass"}
-```
+{"type":"turn.end","role":"assistant","status":"pass"}</pre>
 
 Off-TTY output removes live UI, cursor tricks, frames, animation, hidden role state, and
 raw ANSI. Machine streams use stable event types.
+
+### More Agent Chat TUI Cases
+
+The full 2K gallery covers 16 Agent Chat cards: transcript roles, input draft, multiline
+paste, IME/CJK composition, assistant streaming, thinking summaries, tool use, tool
+results, choices, approvals, alerts, timers, background tasks, subagents, theme adaptation,
+suggestions, file mentions, cancellation, approval outcomes, artifacts, plain non-TTY
+fallback, and NDJSON event mode.
+
+![Agent Chat TUI Before / After](./assets/agent-chat-tui-before-after.png)
 
 ## Skill contents
 
