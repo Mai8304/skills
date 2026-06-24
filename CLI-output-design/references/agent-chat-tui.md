@@ -49,7 +49,7 @@ Default theme mapping:
 | user role / current input accent | cyan label or gutter | `You:` |
 | assistant role | default text, optional bold label | `Assistant:` |
 | system / tool metadata | dim/default label | `System:` / `Tool:` |
-| tool name / command / path / URL / function / formula | cyan technical token | raw copyable token |
+| current tool / copy target / emphasized command, path, URL, function, or formula | cyan accent | raw copyable token |
 | warning / deprecation | yellow + `⚠` + word | `warning:` / `deprecated:` |
 | error / blocked | red headline + `✗` + word | `error:` / `blocked:` |
 | selected row | reverse video or pointer, not both if noisy | `>` |
@@ -209,7 +209,8 @@ Tool use has a start, optional details, a terminal state, and a bounded result p
 
 Rules:
 
-- `⚙ name` marks tool use; the tool name is a technical token, usually cyan in a TTY.
+- `⚙ name` marks tool use; accent the current tool name in a TTY, but keep ordinary
+  arguments and result tokens default unless they are copy targets or selected objects.
 - Arguments/results use `│` continuation detail lines with stable labels: `path`, `args`,
   `stdout`, `stderr`, `result`, `exit`, `duration`.
 - Show bounded previews for large output and a clear truncation count.

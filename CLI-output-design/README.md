@@ -43,6 +43,27 @@ There is one explicit exception: **expressive TTY notices**. Low-frequency inter
 notices, such as update notices, may use a light frame, a small icon, and underlined/raw
 URLs. They must degrade to plain lines outside an interactive TTY.
 
+## Core decision model
+
+Before choosing color or emphasis, use this order:
+
+```text
+reader task -> output shape -> semantic role -> channel constraints
+```
+
+- **Reader task**: discover, inspect, act, or converse.
+- **Output shape**: help, table, detail, progress, error, prompt, transcript, log, or diff.
+- **Semantic role**: state, current/selected item, next action, copy target, secondary, or body.
+- **Channel constraints**: TTY, pipe, `--json`, CI, `NO_COLOR`, `TERM=dumb`, and width.
+
+The practical rule is: layout first, semantic color second, token color never automatic.
+Help, usage, and command catalogues stay mostly plain and rely on structure. Tables and
+lists may color state, current/default rows, and exceptions. Status, doctor, update, and
+install flows use color for outcomes, warnings, failures, and next actions.
+
+Commands, flags, paths, URLs, env vars, and config keys get cyan only when they are the
+identified object, selected/current item, copy target, or next action.
+
 ## Four lenses
 
 Every output decision is judged in this order:
@@ -58,7 +79,7 @@ When these conflict, the earlier lens wins. A pretty layout never justifies a wr
 
 | Area | Coverage |
 |---|---|
-| Color and attributes | semantic ANSI-16 palette, technical-token accent, dim/bold hierarchy, underline/italic/strikethrough restraint |
+| Color and attributes | semantic ANSI-16 palette, opt-in technical-object accent, dim/bold hierarchy, underline/italic/strikethrough restraint |
 | Symbols | fixed glyph vocabulary, ASCII fallbacks, no-emoji default, width-safe alignment |
 | Status and progress | canonical status words, spinners, download bars, nested tasks, checklists, terminal states |
 | Copywriting | errors, warnings, deprecations, notes, next steps, humanized values |
@@ -165,8 +186,8 @@ connected with token sk-live-123456
 ### More Ordinary CLI Cases
 
 The full 1024px gallery covers 24 ordinary CLI atoms: help, bad arguments, errors,
-technical-token emphasis, progress, tables, object details, file trees, diffs, content
-blocks, nested tasks, diagnostics, summaries, dry-run previews, empty states, logs,
+role-bearing technical-object accent, progress, tables, object details, file trees, diffs,
+content blocks, nested tasks, diagnostics, summaries, dry-run previews, empty states, logs,
 expressive notices, prompts, machine mode, CJK width, pager behavior, deprecations,
 interruption, theme adaptation, and redaction.
 
@@ -293,7 +314,7 @@ CLI-output-design/
 
 ## Reference map
 
-- `color.md`: semantic palette, attributes, technical-token accent, theme safety
+- `color.md`: semantic palette, attributes, opt-in technical-object accent, theme safety
 - `symbols.md`: glyph vocabulary, ASCII fallbacks, display-width pitfalls
 - `status-and-progress.md`: spinners, bars, checklists, status vocabulary
 - `copywriting.md`: notes, warnings, deprecations, errors, next steps
@@ -314,6 +335,8 @@ CLI-output-design/
 - Every long operation reaches a visible terminal state.
 - Every error names cause and next action.
 - Deprecations are yellow warnings with replacement when known.
+- Technical tokens use accent only when they are the identified object, selected item,
+  copy target, or next action.
 - URLs remain copyable; OSC 8 and underline are only enhancements.
 - `NO_COLOR=1`, `TERM=dumb`, CI, narrow width, and ASCII fallback still convey the same facts.
 - CJK and wide characters align by display width.

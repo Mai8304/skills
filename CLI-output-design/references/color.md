@@ -12,10 +12,10 @@ pipe, on a monochrome terminal, or for a colorblind reader. The eye is drawn to 
 treat it as a spotlight: if everything is colored, nothing stands out.
 
 Color works on **two independent channels** — keep them separate. **Hue** says *what kind of
-thing* this is (green pass · red fail · yellow warn · cyan accent for commands / paths / URLs
-/ flags); **intensity** says *how much it should grab the eye* within any hue — **bold** to
+thing* this is (green pass · red fail · yellow warn · cyan accent for current items,
+copy targets, links, and next actions); **intensity** says *how much it should grab the eye* within any hue — **bold** to
 promote, default as baseline, **dim** to demote. They compose: a **bold-red** headline is the
-one error among several red tokens; a **dim-cyan** path is a secondary command; a
+one error among several red tokens; a **dim-cyan** command can be a secondary copy target; a
 **bold-default** heading carries no state at all. Pick a hue for the meaning and an intensity
 for the emphasis, separately — and since either can vanish (piped, monochrome, a terminal
 with no bold), neither may be the *only* carrier of a state.
@@ -44,12 +44,11 @@ only when the same information has a clean plain-text fallback.
   render it as bright color, or drop it).
 - In an error block, color the **headline** red — leave the body default so the one line
   that matters stays findable.
-- Give technical tokens one accent color (cyan): commands, flags, env vars, config keys,
-  paths, URLs, function names, and formulas when they are the thing being identified or
-  copied.
+- Give technical tokens one accent color (cyan) only when they are serving an explicit
+  semantic role: identified object, current/selected item, copy target, or next action.
 - Use **typed emphasis**: outcome numbers use bold/default (plus status color only when the
-  number itself carries pass/fail/warn); technical tokens use cyan; status words use status
-  colors; ordinary prose stays default.
+  number itself carries pass/fail/warn); role-bearing technical tokens use cyan; status
+  words use status colors; ordinary prose stays default.
 
 **Don't**
 
@@ -60,8 +59,11 @@ only when the same information has a clean plain-text fallback.
   them apart).
 - Paint a whole multi-line error red — it buries the actionable line.
 - Hardcode hex that ignores the user's theme.
-- Use cyan as a generic "important" color; it means technical token / link / selected
-  accent, not emphasis.
+- Use cyan as a generic "important" color; it means identified technical object / link /
+  selected or action accent, not emphasis.
+- Run a global "technical token" highlighter over dense help, tables, or logs. In those
+  surfaces, most command names, flags, paths, and IDs should stay default unless their
+  semantic role earns emphasis.
 - Use underline, italic, or strikethrough as generic emphasis.
 
 ## Real examples
@@ -91,7 +93,7 @@ Hue — ANSI-16 named, semantic *state* (always one of three redundant signals):
 | green | pass / success / added / created |
 | red | fail / error / removed / deleted — **headline only**, not the whole block |
 | yellow | warn / attention / deprecation / changed |
-| cyan | technical accent: command, path, URL, flag, env var, config key, function, formula, selected item |
+| cyan | accent: current/selected item, copy target, next action, emphasized link or technical object |
 | (default) | body text and ordinary output — most of the screen |
 
 Severity ladder — visual strength follows command semantics:
@@ -112,13 +114,13 @@ Emphasis — intensity, **orthogonal to hue**; carries hierarchy, not state:
 | (default) | baseline — the bulk of output | — |
 | dim / gray | demote: timestamps, hints, metadata, `unchanged` | weakest signal; never the sole mark of a distinction that matters |
 
-Technical-token emphasis:
+Technical-token emphasis is opt-in, not a global scan:
 
 | Token | Style |
 |---|---|
-| command / flag / env var / config key | cyan, usually backticked in prose |
-| path / URL | cyan when emphasized; keep complete and copyable; do not wrap mid-token |
-| function / formula | cyan only when the function or formula is the subject |
+| command / flag / env var / config key | cyan only when it is the identified object, copy target, selected item, or next action; otherwise default |
+| path / URL | cyan when emphasized as a target or link; keep complete and copyable; do not wrap mid-token |
+| function / formula | cyan only when the function or formula is the subject; otherwise default |
 | important number | bold default; add status color only when it carries a status |
 | explanatory sentence | default text; use structure and labels instead of coloring the whole sentence |
 

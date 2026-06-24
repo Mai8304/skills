@@ -20,6 +20,7 @@ shape, a TTY example, and the piped/narrow/agent degradation. Open the one you'r
 ### Help / usage
 
 Help output is a command surface, not a data result. Print help to stdout and exit `0`.
+It is a discovery surface: the reader is scanning structure, not evaluating state.
 Structure it into sections; avoid one-line brace blobs that require horizontal scanning.
 Use aligned two-column command/flag lists and short examples.
 
@@ -49,9 +50,11 @@ Bad:
 Usage: mycli {init,deploy,status,destroy,config,auth,logs,doctor,completion} [options]
 ```
 
-Rules: keep command names and flags cyan on a TTY only; wrap descriptions with hanging
-indent; keep URLs and commands complete and copyable. Piped help is the same plain text,
-without color or pager. Long help may page only when stdout is a TTY.
+Rules: prefer sectioning, alignment, hanging indent, and bold headings. Do not
+automatically color every command name, flag, or binary name. Accent only explicit
+copy targets such as example commands or `Next:` commands, and only on a TTY. Keep URLs
+and commands complete and copyable. Piped help is the same plain text, without color or
+pager. Long help may page only when stdout is a TTY.
 
 ### Usage and argument errors
 

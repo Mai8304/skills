@@ -15,6 +15,22 @@ never justifies a wrong status).
 This is a principles skill plus a pattern cookbook. Adapt it to the CLI in front of you;
 don't apply it mechanically. Open the reference that matches what you're rendering.
 
+## Core decision model
+
+Use this order before choosing color or emphasis:
+
+```text
+reader task -> output shape -> semantic role -> channel constraints
+```
+
+- **Reader task**: discover, inspect, act, or converse.
+- **Output shape**: help, table, detail, progress, error, prompt, transcript, log, diff,
+  and similar surfaces.
+- **Semantic role**: state, current/selected, next action/copy target, secondary, or body.
+- **Channel constraints**: TTY, pipe, `--json`, CI, `NO_COLOR`, `TERM=dumb`, and width.
+
+Layout comes first. Semantic color comes second. Token color is never automatic.
+
 ## The four lenses
 
 Judge every output decision through these, in priority order:
@@ -38,6 +54,9 @@ Judge every output decision through these, in priority order:
 - **Detect the channel before you decorate.** Check `isatty`; honor `NO_COLOR`,
   `--no-color`, `TERM=dumb`, and CI. Degrade gracefully: color → plain, Unicode → ASCII,
   animated → static. (→ `robustness.md`)
+- **Color semantic roles, not token types.** Commands, flags, paths, URLs, env vars, and
+  config keys get accent only when they are the identified object, current/selected item,
+  copy target, or next action — never because a global scanner recognized the token.
 - **stdout is data, stderr is conversation.** Results and machine output go to stdout;
   progress, logs, diagnostics, and notices go to stderr — so a pipe carries only data.
 - **Every long operation reaches a visible terminal state** (✓ / ✗). No orphaned spinners.
@@ -70,7 +89,8 @@ Stop if you're about to:
 
 - make color or emoji the **only** signal of a state
 - color decoratively or rainbow with no meaning
-- use cyan as a generic "important" color instead of a technical-token accent
+- color every command, flag, path, URL, or env var just because it is a technical token
+- use cyan as a generic "important" color instead of a semantic accent
 - render deprecations in red unless the current command fails
 - use underline, italic, or strikethrough as generic emphasis
 - show a progress bar stuck at 99%, or fake progress for an instant operation
@@ -100,7 +120,7 @@ Stop if you're about to:
 - [ ] Every error names a cause and a concrete next action
 - [ ] Status words come from one consistent vocabulary
 - [ ] Deprecations are yellow with a replacement when known; red is reserved for current failure
-- [ ] Commands, flags, env vars, config keys, paths, URLs, functions, and formulas use one technical-token accent
+- [ ] Technical tokens use accent only when they are the identified object, selected item, copy target, or next action
 - [ ] Exit codes are correct (0 success, non-zero failure, documented)
 - [ ] Long operations always reach a visible terminal state (✓ / ✗)
 - [ ] Empty results say so helpfully (not a blank screen)

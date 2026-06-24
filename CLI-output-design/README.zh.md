@@ -35,6 +35,27 @@ cp -r skills/CLI-output-design ~/.codex/skills/cli-output-design
 
 唯一明确放宽的是 **expressive TTY notice**：低频、非阻塞、交互式通知可以用轻框、小 icon、链接下划线，例如版本更新提示。但一旦进入 pipe、CI、`NO_COLOR` 或 `TERM=dumb`，必须退回普通文本。
 
+## 核心决策模型
+
+决定颜色和强调之前，先按这个顺序判断：
+
+```text
+reader task -> output shape -> semantic role -> channel constraints
+```
+
+- **reader task**：发现、检查、行动、对话。
+- **output shape**：help、table、detail、progress、error、prompt、transcript、log、diff。
+- **semantic role**：状态、当前/选中项、下一步、可复制目标、次要信息、正文。
+- **channel constraints**：TTY、pipe、`--json`、CI、`NO_COLOR`、`TERM=dumb`、宽度。
+
+通俗地说：先靠布局，第二才是语义颜色，永远不要按 token 类型自动上色。
+help、usage、命令目录主要靠 section、缩进、对齐和 heading；表格和列表可以给状态、
+当前项、默认项、异常项上色；status、doctor、update、install 这类流程最适合把颜色
+用在结果、警告、失败和下一步。
+
+命令、flag、路径、URL、环境变量、配置 key 只有在它们是被说明的对象、当前/选中项、
+可复制目标或下一步动作时才用青色。
+
 ## 四个判断顺序
 
 每个输出设计都按这个顺序判断：
@@ -50,7 +71,7 @@ cp -r skills/CLI-output-design ~/.codex/skills/cli-output-design
 
 | 类别 | 覆盖内容 |
 |---|---|
-| 颜色与属性 | ANSI-16 语义色、技术 token accent、dim/bold 层次、underline/italic/strikethrough 的限制 |
+| 颜色与属性 | ANSI-16 语义色、按语义启用的技术对象 accent、dim/bold 层次、underline/italic/strikethrough 的限制 |
 | 符号 | 固定 glyph 词表、ASCII fallback、默认不用 emoji、宽度安全 |
 | 状态与进度 | canonical 状态词、spinner、下载条、嵌套任务、checklist、终态 |
 | 文案 | note、warning、deprecated、error、Reason、Next、人性化数值 |
@@ -96,7 +117,8 @@ Ran tests. Some failed. Lots of log output...
 
 ![After: Semantic Color, Progress, and Result State](./assets/readme-after/ordinary-progress-after.png?v=readable-20260623)
 
-红色给当前失败，绿色给通过，黄色给风险，青色给技术 token。进度必须诚实，并且必须落到终态。
+红色给当前失败，绿色给通过，黄色给风险，青色只给有语义角色的当前项、复制目标、
+下一步或被强调的技术对象。进度必须诚实，并且必须落到终态。
 
 ### 3. 数据形态和诊断
 
@@ -162,7 +184,7 @@ connected with token sk-live-123456
 
 ### 更多普通 CLI 例子
 
-完整 1024px 图覆盖 24 个普通 CLI 输出原子：help、bad arguments、error、技术 token、进度、表格、对象详情、文件树、diff、内容块、嵌套任务、诊断、结果汇总、dry-run、空状态、日志、expressive notice、prompt、machine mode、CJK 宽度、pager、deprecation、中断、主题适配和 redaction。
+完整 1024px 图覆盖 24 个普通 CLI 输出原子：help、bad arguments、error、有语义角色的技术对象 accent、进度、表格、对象详情、文件树、diff、内容块、嵌套任务、诊断、结果汇总、dry-run、空状态、日志、expressive notice、prompt、machine mode、CJK 宽度、pager、deprecation、中断、主题适配和 redaction。
 
 ![Ordinary CLI Before / After](./assets/ordinary-cli-before-after.png?v=readable-20260623)
 
@@ -276,7 +298,7 @@ CLI-output-design/
 
 ## Reference 怎么用
 
-- `color.md`：颜色、属性、技术 token、主题适配
+- `color.md`：颜色、属性、按语义启用的技术对象 accent、主题适配
 - `symbols.md`：glyph 词表、ASCII fallback、显示宽度
 - `status-and-progress.md`：spinner、进度条、checklist、状态词
 - `copywriting.md`：note、warning、deprecated、error、Reason、Next
@@ -294,6 +316,7 @@ CLI-output-design/
 - 长任务都有可见终态。
 - 错误有原因和下一步。
 - deprecated 是黄色 warning，已知时给 replacement。
+- 技术 token 只有在它是被说明的对象、选中项、复制目标或下一步动作时才用 accent。
 - URL 可复制，OSC 8 / underline 只是 TTY 增强。
 - `NO_COLOR=1`、`TERM=dumb`、CI、窄屏、ASCII fallback 都不丢语义。
 - CJK / 宽字符按 display width 对齐。
