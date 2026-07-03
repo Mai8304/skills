@@ -3,7 +3,7 @@
 > A production-grade agent skill for designing terminal surfaces that are accurate first,
 > human-usable second, script/agent-usable third, and visually calm last.
 
-**English** · [中文](./README.zh.md) · Version `2.0.3`
+**English** · [中文](./README.zh.md) · Version `2.0.4`
 
 This skill is for terminal surfaces: what a CLI prints, how a TUI behaves, how color and
 symbols carry state, how progress and errors recover, how output degrades in pipes and CI,
@@ -40,8 +40,8 @@ logs. It is useful when you need to:
 - design terminal interaction: prompts, pickers, multi-select, approvals, key hints,
   cancellation, disabled states, dangerous actions, and non-TTY fallback
 - make Agent Chat TUI understandable: transcript roles, live input drafts, streaming/final
-  states, thinking summaries, tool calls/results, code blocks, file trees, diffs, artifacts,
-  background tasks, and event fallbacks
+  states, observable thinking summaries, tool calls/results, code blocks, file trees,
+  diffs, approvals, artifacts, background tasks, and event fallbacks
 - keep visual language consistent: semantic colors, symbols, spacing, borders, density,
   alignment, light/dark themes, `NO_COLOR`, `TERM=dumb`, narrow width, and CJK/wide text
 - make failures production-ready: real cause, affected object, impact, recovery path,
@@ -90,10 +90,10 @@ state, an unclear recovery path, or a polluted machine contract.
 
 ## Before / after: CLI and Interactive TUI
 
-The README shows a few representative cases. The PNG gallery after these examples carries
-the broader visual reference. Each representative image is a before/after comparison with
-English terminal text. Examples are recipes, not templates: preserve the information
-contract and adapt the layout to the CLI in front of you.
+The README shows representative cases. Each image is a before/after comparison with English
+terminal text. The code blocks show the same failure mode in plain text; the image shows one
+possible rendering. Examples are recipes, not templates: preserve the information contract
+and adapt layout, density, and voice to the CLI in front of you.
 
 ### 1. Errors That Guide
 
@@ -116,87 +116,59 @@ and a concrete recovery step when knowable.
 **Before**
 
 ```text
-Important: run shipctl auth refresh now
-See docs: https://example.com/docs/auth
-
-Uploading release.tgz 3.8/5.1 MB 74% 1.2 MB/s eta 1s
-Uploaded release.tgz 5.1 MB in 4.2s
-Deploy finished. Some checks failed. Lots of log output...
+Deploying...
+Still working...
+Done, but some things failed.
+Lots of log output...
 ```
 
 **After**
 
 ![Before / after: Semantic Color, Progress, and Result State](./assets/readme-cases/batch-progress.png)
 
-Use color for semantic state: green for success, yellow for warning or degraded state, red
-for current failure, cyan for focus/current/next-action roles. Progress must be honest and
-must resolve to a terminal state.
+Use color for semantic state only after the text names the state. Green can reinforce
+completed work, yellow can reinforce warning, waiting, skipped, or partial states, red can
+reinforce actual failure, and cyan can reinforce the current operation or next action.
+Progress must be honest while running and must resolve to a truthful terminal state.
 
 ### 3. Data Shapes and Diagnostics
 
 **Before**
 
 ```text
-+--------+--------------------+--------+
-| NUMBER | TITLE              | STATE  |
-+--------+--------------------+--------+
-| 128    | Fix color fallback | open   |
-+--------+--------------------+--------+
-
 ID TITLE AUTHOR BRANCH CHECKS FILES
-128 Fix color fallback open zw fix-color->main pass=4 files=6 +128 -34
-
-error E0382 borrow of moved value cfg
-src/main.go line 14 column 9
-line 12 load(cfg) moved cfg
-line 14 print(cfg) used after move
+128 Fix color fallback open zw fix-color->main pass=4 files=6
+error config bad
+line 14 column 9
 ```
 
 **After**
 
 ![Before / after: Data Shapes and Diagnostics](./assets/readme-cases/batch-data-diagnostics.png)
 
-Use tables for homogeneous rows, key-value blocks for one object, and structured diagnostics
-for source, cause, evidence, and next action. Alignment must use display width, not byte or
-rune count.
+Use tables for homogeneous rows, key-value blocks for one object, and diagnostics for
+source, cause, evidence, and next action. Do not squeeze long paths or errors into table
+cells. Alignment must use display width, not byte or rune count.
 
 ### 4. Runtime Contracts and Redaction
 
 **Before**
 
 ```text
-Checking...
-{
-  "schema_version": "1",
-  "ok": false,
-  "duration_ms": 412,
-  "checks": [
-    {
-      "name": "registry_auth",
-      "status": "\x1b[31mfail\x1b[0m",
-      "message": "not configured",
-      "next_steps": [
-        { "command": "shipctl auth refresh", "reason": "refresh credentials" }
-      ]
-    }
-  ]
-}
-Run shipctl auth refresh to fix this!
-
-NAME      STATUS
-配置文件      missing
-gateway   pass
-
-connected with token sk-live-123456
+Deploying api...
+{ "status": "\x1b[31mfail\x1b[0m" }
+Try logging in again!
+token: sk-live-123456
+Done!
 ```
 
 **After**
 
 ![Before / after: Runtime Contracts and Redaction](./assets/readme-cases/machine-contracts.png)
 
-Machine mode is a contract. It must not mix ANSI, spinner frames, prose wrappers, or
-decorative blank lines into stdout. Secrets must be redacted in human output, logs,
-transcripts, fixtures, and machine events.
+Machine mode is a contract. Human progress and diagnostics stay off stdout, and `--json` or
+NDJSON stays parseable even when color is forced. Secrets must be redacted in human output,
+logs, transcripts, fixtures, screenshots, and machine events.
 
 ### 5. Content Blocks, File Trees, Diff, and Logs
 
@@ -257,7 +229,9 @@ and redaction.
 Agent Chat Terminal UI is not ordinary command output. It has live input, transcript roles,
 assistant streaming and final states, tools, choices, approvals, background work, artifacts,
 interrupts, replay, and machine-event fallbacks. The skill defines reusable atoms and
-contracts, not one product-specific full-screen template.
+contracts, not one product-specific full-screen template. Normal conversation should stay
+message-first; panels appear only for interaction, risk, dense evidence, trust boundaries,
+or expanded inspection.
 
 ### 1. Transcript roles and input composer
 
@@ -293,10 +267,10 @@ partial hidden reasoning shown to user
 
 ![Before / after: Thinking and Tool Use](./assets/readme-cases/agent-tools.png?v=thinking-contract-20260703)
 
-Never expose hidden chain-of-thought. A spinner, dot, or small tool symbol can show that
-work is currently running, but it cannot be the only state signal. The transcript still
-needs observable summaries, bounded tool output, terminal state, duration, command identity,
-and a recovery path when the tool fails.
+Never expose hidden chain-of-thought. Visible thinking is a muted observable status or plan
+summary, not reasoning content. Tool call and tool result rows stay separate, correlate by
+ID, and show terminal state, duration, safe command summary, bounded output, and recovery
+when something fails.
 
 ### 3. Approvals and Safe Defaults
 
@@ -338,7 +312,8 @@ Partial assistant prose...
 ![Before / after: Non-TTY and NDJSON Event Mode](./assets/readme-cases/agent-events.png?v=event-contract-20260703)
 
 Off-TTY output removes live UI, cursor tricks, frames, animation, hidden role state, and raw
-ANSI. Machine streams use stable event types and documented schemas.
+ANSI. Plain replay logs preserve roles and results. NDJSON streams emit one complete JSON
+object per line with stable event types and documented schemas.
 
 ### 5. Long Output and Untrusted Content
 
@@ -368,11 +343,13 @@ names operation, cause, impact, next step, and an inspectable log or artifact.
 ### Agent Chat Coverage Checklist
 
 The images above are component-level checks, not one full-screen template. For production
-review, verify the rendered Agent Chat flow still covers transcript roles, input draft,
-queued input, IME/CJK composition, assistant streaming/final states, quiet thinking, tool
-running/completed/failed states, bounded long output, untrusted output, code/file/diff
-blocks, approvals, recoverable errors, background work, artifacts, interruption, replay,
-plain non-TTY fallback, and NDJSON event mode.
+review, inspect at least one realistic rendered conversation in the target terminal, not
+only README art. It should cover the states the product supports: transcript roles, input
+draft, queued input, IME/CJK composition, assistant streaming/final states, quiet thinking,
+tool running/completed/failed states, bounded long output, untrusted output,
+code/file/diff blocks, approvals, recoverable errors, background work, artifacts,
+interruption, replay, plain non-TTY fallback, and NDJSON event mode. If the product does
+not support one of these states, document the fallback or non-goal instead of faking it.
 
 ## Skill contents
 
@@ -383,7 +360,6 @@ CLI-Design/
 ├── SKILL.md
 ├── assets/
 │   ├── ordinary-cli-before-after.png
-│   ├── agent-chat-tui-before-after.png
 │   └── readme-cases/
 └── references/
     ├── batch-cli-output.md
@@ -429,4 +405,5 @@ templates for agents.
 - Machine modes remain plain data even when color is forced.
 - CJK and wide characters align by display width.
 - Secrets are redacted in logs, transcripts, debug output, fixtures, and machine events.
-- Agent Chat live UI has plain log and NDJSON/event fallbacks.
+- Agent Chat visual review uses a realistic rendered transcript, and live UI has plain log
+  plus NDJSON/event fallbacks.

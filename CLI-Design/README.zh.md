@@ -2,7 +2,7 @@
 
 > 这个 skill 用来设计生产级 terminal surface：先保证准确，再保证人能快速读懂，再保证脚本和 AI agent 能解析，最后才是视觉上的克制和好看。
 
-[English](./README.md) · **中文** · 版本 `2.0.3`
+[English](./README.md) · **中文** · 版本 `2.0.4`
 
 它关注 CLI 和 terminal TUI 在终端里“怎么说话、怎么交互”：颜色、符号、状态、进度、
 错误、布局、表格、树、diff、JSON、管道、CI、`NO_COLOR`，以及 Agent Chat Terminal UI
@@ -26,7 +26,7 @@ cp -r skills/CLI-Design ~/.codex/skills/cli-design
 安装后，让 agent 在设计、实现、review 或改进 CLI / terminal TUI 输出时使用
 `cli-design`。
 
-## 他有什么用？
+## 它有什么用？
 
 CLI-Design 帮 agent 把 terminal output 做成生产级 UI/UX，而不是只把日志“变好看”。它主要解决这些问题：
 
@@ -35,8 +35,8 @@ CLI-Design 帮 agent 把 terminal output 做成生产级 UI/UX，而不是只把
   spinner、解释性废话或装饰框
 - **让交互更可靠**：prompt、picker、多选、approval、快捷键、取消、disabled state、危险操作和
   non-TTY fallback 都先有明确契约
-- **让 Agent Chat TUI 更专业**：区分 transcript、输入草稿、streaming/final state、thinking 摘要、
-  tool call/result、代码块、文件树、diff、artifact、后台任务和 event fallback
+- **让 Agent Chat TUI 更专业**：区分 transcript、输入草稿、streaming/final state、可观察的
+  thinking 摘要、tool call/result、代码块、文件树、diff、approval、artifact、后台任务和 event fallback
 - **让视觉风格更统一**：颜色、符号、间距、边框、密度、对齐、亮/暗主题、`NO_COLOR`、
   `TERM=dumb`、窄屏、CJK 宽字符都有一致规则
 - **让失败更像生产环境**：说明真实原因、影响对象、影响结果、恢复方案，保护 secret，危险操作默认安全，
@@ -45,7 +45,7 @@ CLI-Design 帮 agent 把 terminal output 做成生产级 UI/UX，而不是只把
 它不是给所有 CLI 套同一个模板。安静的 CI 命令、密集的 table browser、Agent Chat terminal
 可以长得不一样，但它们都应该遵守同一套原则：状态真实，人能行动，机器能读，视觉只强化语义。
 
-## 他是如何工作的？
+## 它是如何工作的？
 
 这个 skill 用的是路由流程，不是固定模板：
 
@@ -81,9 +81,9 @@ CLI-Design 帮 agent 把 terminal output 做成生产级 UI/UX，而不是只把
 
 ## CLI 和 Interactive TUI：改造前 / 改造后
 
-README 主体只展示少数典型 case；完整视觉参考放在本节末尾图片中。每张典型图都是
-before/after 对比，图片里的 terminal 文案统一使用英文。例子是 recipe，不是模板：保留信息契约，
-根据眼前 CLI 的风格调整布局。
+README 主体只展示典型 case。每张图都是 before/after 对比，图片里的 terminal 文案统一使用英文。
+代码块展示同一类问题的纯文本形态，图片展示其中一种可能的渲染方式。例子是 recipe，不是模板：
+保留信息契约，根据眼前 CLI 的风格调整布局、密度和语气。
 
 ### 1. 会引导的错误
 
@@ -105,39 +105,29 @@ Error: failed
 **改造前**
 
 ```text
-Important: run shipctl auth refresh now
-See docs: https://example.com/docs/auth
-
-Uploading release.tgz 3.8/5.1 MB 74% 1.2 MB/s eta 1s
-Uploaded release.tgz 5.1 MB in 4.2s
-Deploy finished. Some checks failed. Lots of log output...
+Deploying...
+Still working...
+Done, but some things failed.
+Lots of log output...
 ```
 
 **改造后**
 
 ![Before / after: Semantic Color, Progress, and Result State](./assets/readme-cases/batch-progress.png)
 
-颜色服务于语义：绿色给成功，黄色给 warning 或 degraded state，红色给当前失败，青色给
-focus/current/next-action 角色。进度必须诚实，并且必须落到终态。
+颜色只能强化语义，不能替代文字。绿色可以强化 completed，黄色可以强化 warning、waiting、
+skipped 或 partial，红色可以强化真实失败，青色可以强化当前操作或下一步。进度必须诚实，
+运行中是什么状态就说什么状态，结束后必须落到真实终态。
 
 ### 3. 数据形态和诊断
 
 **改造前**
 
 ```text
-+--------+--------------------+--------+
-| NUMBER | TITLE              | STATE  |
-+--------+--------------------+--------+
-| 128    | Fix color fallback | open   |
-+--------+--------------------+--------+
-
 ID TITLE AUTHOR BRANCH CHECKS FILES
-128 Fix color fallback open zw fix-color->main pass=4 files=6 +128 -34
-
-error E0382 borrow of moved value cfg
-src/main.go line 14 column 9
-line 12 load(cfg) moved cfg
-line 14 print(cfg) used after move
+128 Fix color fallback open zw fix-color->main pass=4 files=6
+error config bad
+line 14 column 9
 ```
 
 **改造后**
@@ -145,44 +135,26 @@ line 14 print(cfg) used after move
 ![Before / after: Data Shapes and Diagnostics](./assets/readme-cases/batch-data-diagnostics.png)
 
 同质数据用表格，单个对象用 key-value，诊断要呈现 source、cause、evidence 和 next action。
-对齐必须按 display width，不按 byte 或 rune。
+不要把长路径、长错误或段落硬塞进表格单元格。对齐必须按 display width，不按 byte 或 rune。
 
 ### 4. 机器契约和敏感信息
 
 **改造前**
 
 ```text
-Checking...
-{
-  "schema_version": "1",
-  "ok": false,
-  "duration_ms": 412,
-  "checks": [
-    {
-      "name": "registry_auth",
-      "status": "\x1b[31mfail\x1b[0m",
-      "message": "not configured",
-      "next_steps": [
-        { "command": "shipctl auth refresh", "reason": "refresh credentials" }
-      ]
-    }
-  ]
-}
-Run shipctl auth refresh to fix this!
-
-NAME      STATUS
-配置文件      missing
-gateway   pass
-
-connected with token sk-live-123456
+Deploying api...
+{ "status": "\x1b[31mfail\x1b[0m" }
+Try logging in again!
+token: sk-live-123456
+Done!
 ```
 
 **改造后**
 
 ![Before / after: Runtime Contracts and Redaction](./assets/readme-cases/machine-contracts.png)
 
-机器模式是契约，不能混进 ANSI、spinner frame、prose wrapper 或装饰性空行。secret 必须在
-human output、log、transcript、fixture、machine event 中先 redaction。
+机器模式是契约。人看的进度和诊断不要污染 stdout；`--json` 和 NDJSON 即使在强制 color 时也必须能解析。
+敏感信息必须先 redacted，再进入 human output、log、transcript、fixture、截图或 machine event。
 
 ### 5. 内容块、文件树、diff 和日志
 
@@ -240,6 +212,7 @@ empty state、multi-select、machine JSON、pipe/`NO_COLOR` fallback 和 redacti
 Agent Chat Terminal UI 和普通 CLI 输出不同。它有 live input、transcript、assistant
 streaming/final state、tool、choice、approval、background work、artifact、interrupt、replay
 和机器事件 fallback。这个 skill 定义的是可组合原子和契约，不是某个具体产品的一整套全屏模板。
+普通对话应该保持 message-first；只有交互、风险、密集证据、信任边界或展开检查时，才需要更明显的面板。
 
 ### 1. 角色、输入草稿、提交后的 transcript
 
@@ -274,8 +247,9 @@ partial hidden reasoning shown to user
 
 ![Before / after: Thinking and Tool Use](./assets/readme-cases/agent-tools.png?v=thinking-contract-20260703)
 
-不要展示 hidden chain-of-thought。spinner、动态点、小 tool icon 可以表示“正在运行”，但不能成为唯一状态信号。
-transcript 里仍然要有可观察摘要、受限 tool 输出、终态、duration、command identity，以及失败时的恢复路径。
+不要展示隐藏推理过程（hidden chain-of-thought）。可见的 Thinking 只能是低权重的状态或计划摘要，不是推理正文。
+tool call 和 tool result 要分开显示，用 ID 对齐，并说明终态、duration、安全的命令摘要、受限输出，
+以及失败时的恢复路径。
 
 ### 3. 审批和安全默认值
 
@@ -315,8 +289,8 @@ Partial assistant prose...
 
 ![Before / after: Non-TTY and NDJSON Event Mode](./assets/readme-cases/agent-events.png?v=event-contract-20260703)
 
-非 TTY 下不保留 live UI、光标控制、动画、边框、隐藏 role state 或 raw ANSI。机器事件使用
-稳定 event type 和已文档化 schema。
+非 TTY 下不保留 live UI、光标控制、动画、边框、隐藏 role state 或 raw ANSI。plain replay log
+要保留 role 和结果；NDJSON event stream 要一行一个完整 JSON object，并使用稳定 event type 和已文档化 schema。
 
 ### 5. 长输出和不可信内容
 
@@ -343,11 +317,12 @@ not-ready state 和 setup-needed skill。生产级错误要说明 operation、ca
 
 ### Agent Chat 覆盖检查清单
 
-上面的图片是组件级检查，不是一套固定全屏模板。生产 review 时，还要确认真实渲染出来的 Agent
-Chat flow 覆盖 transcript role、输入草稿、queued input、IME/CJK、assistant streaming/final
-state、低权重 thinking、tool running/completed/failed state、受限长输出、不可信输出、code/file/diff
-block、approval、recoverable error、background work、artifact、interrupt、replay、plain non-TTY
-fallback 和 NDJSON event mode。
+上面的图片是组件级检查，不是一套固定全屏模板。生产验收时，必须看目标 terminal 里真实渲染出来的
+至少一段完整对话，而不是只看 README 图。它应该覆盖产品实际支持的状态：transcript role、输入草稿、
+queued input、IME/CJK、assistant streaming/final state、低权重 thinking、tool running/completed/failed
+state、受限长输出、不可信输出、code/file/diff block、approval、recoverable error、background work、
+artifact、interrupt、replay、plain non-TTY fallback 和 NDJSON event mode。某个状态如果产品不支持，
+就说明 fallback 或明确的非目标，不要为了截图硬造组件。
 
 ## 文件结构
 
@@ -358,7 +333,6 @@ CLI-Design/
 ├── SKILL.md
 ├── assets/
 │   ├── ordinary-cli-before-after.png
-│   ├── agent-chat-tui-before-after.png
 │   └── readme-cases/
 └── references/
     ├── batch-cli-output.md
@@ -401,4 +375,5 @@ CLI-Design/
 - machine mode 即使强制 color，也必须保持纯数据。
 - CJK / 宽字符按 display width 对齐。
 - secret 在 log、transcript、debug output、fixture、machine event 中都必须 redacted。
-- Agent Chat live UI 有 plain log fallback 和 NDJSON/event fallback。
+- Agent Chat 的视觉验收要看真实渲染出来的 transcript；live UI 要有 plain log fallback 和
+  NDJSON/event fallback。
