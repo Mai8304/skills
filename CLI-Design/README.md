@@ -28,61 +28,52 @@ cp -r skills/CLI-Design ~/.codex/skills/cli-design
 Then ask your agent to use `cli-design` when designing, building, reviewing, or improving
 CLI and terminal TUI output.
 
-The GitHub project directory is `CLI-Design`. The installed Codex skill name is
-`cli-design`, because skill names must be lowercase hyphen-case.
+## What it helps with
 
-## Default stance
+CLI-Design helps agents turn terminal output into production-grade UI/UX, not just prettier
+logs. It is useful when you need to:
 
-The baseline is strict:
+- make command output easy for people to scan: result, blocker, scope, evidence, and next
+  action are visible without reading every line
+- keep machine contracts clean: `stdout` carries data, `stderr` carries conversation, and
+  `--json`/NDJSON stay free of ANSI, spinners, prose wrappers, and decorative frames
+- design terminal interaction: prompts, pickers, multi-select, approvals, key hints,
+  cancellation, disabled states, dangerous actions, and non-TTY fallback
+- make Agent Chat TUI understandable: transcript roles, live input drafts, streaming/final
+  states, thinking summaries, tool calls/results, code blocks, file trees, diffs, artifacts,
+  background tasks, and event fallbacks
+- keep visual language consistent: semantic colors, symbols, spacing, borders, density,
+  alignment, light/dark themes, `NO_COLOR`, `TERM=dumb`, narrow width, and CJK/wide text
+- make failures production-ready: real cause, affected object, impact, recovery path,
+  redaction, safe defaults, and stable exit behavior
 
-- **terminal surface as protocol**: output is a contract between human, script, and agent
-- **semantic over decorative**: color, symbols, spacing, and labels must carry meaning
-- **contract before chrome**: decide stdout/stderr, schema, exit code, fallback, and risk first
-- **low decoration**: no rainbow output, no default emoji, no frames around ordinary data
-- **scriptable first**: `stdout` is data; `stderr` is conversation; `--json` is pure data
-- **TTY-aware**: animation, cursor tricks, links, and live redraw are interactive-only
-- **theme-safe**: respect light/dark terminals, `NO_COLOR`, CI, `TERM=dumb`, narrow width,
-  CJK/wide characters, and ASCII fallback
-- **safe by default**: destructive actions preview impact and default to No
+The goal is not a house style. A quiet CI command, a dense table browser, and an agent-chat
+terminal can look different. They should still share the same discipline: true state, clear
+human action, clean machine output, and visual meaning that survives without color or
+animation.
 
-There is one explicit exception: **expressive TTY notices**. Low-frequency interactive
-notices, such as update notices, may use a light frame, a small icon, and underlined/raw
-URLs. They must degrade to plain lines outside an interactive TTY.
+## How it works
 
-## Core decision model
+The skill uses a routing workflow instead of a fixed template:
 
-Before choosing color, symbols, layout chrome, or copy, use this order:
+1. **Identify the reader and job.** Is this for a human, script, AI agent, operator, or
+   mixed audience? Are they trying to inspect, act, recover, automate, or converse?
+2. **Choose the surface family.** Route the work to Batch CLI, Interactive TUI, Agent Chat
+   Terminal UI, or Machine-readable output before choosing layout or color.
+3. **Define the contract.** Decide stdout/stderr, exit code, schema, event stream, prompt
+   behavior, approval default, terminal state, fallback format, and redaction rules.
+4. **Shape the information.** Put result, cause, scope, evidence, next step, rows, choices,
+   transcript atoms, code, diffs, logs, and artifacts in the order the reader needs them.
+5. **Apply visual semantics.** Use color, symbols, borders, spacing, and density only after
+   the state roles are clear: success, warning, error, running, info, neutral, attention,
+   cancelled, focus, selected, disabled, danger, and next action.
+6. **Check degradation and safety.** Verify pipe, CI, `NO_COLOR`, `FORCE_COLOR`,
+   `TERM=dumb`, narrow width, Unicode fallback, CJK/wide-character alignment, secret
+   redaction, and destructive-action defaults.
 
-```text
-reader task -> surface family -> interaction contract -> channel contract -> visual semantics
-```
-
-- **Reader task**: discover, inspect, act, recover, automate, or converse.
-- **Surface family**: Batch CLI, Interactive TUI, Agent Chat Terminal UI, or
-  Machine-readable output.
-- **Interaction contract**: passive output, confirmation, single select, multi select,
-  approval, interrupt, replay, or live agent session.
-- **Channel contract**: TTY, pipe, `--json`, NDJSON, CI, `NO_COLOR`, `TERM=dumb`, width,
-  Unicode support, stdout/stderr, and exit code.
-- **Visual semantics**: state, focus, selection, disabled reason, danger, next action,
-  copy target, secondary information, and body text.
-
-The practical rule is: information structure first, layout second, semantic color third.
-Technical tokens such as commands, flags, paths, URLs, environment variables, and config
-keys get accent only when they are the identified object, selected item, copy target,
-current operation, or next action.
-
-## Four lenses
-
-Every terminal design decision is judged in this order:
-
-1. **Accurate**: never lie about state, progress, counts, risk, cause, or uncertainty.
-2. **Human-usable**: show the result, blocker, next action, and recovery path at a glance.
-3. **Agent/script-usable**: keep logs, schemas, events, status words, and exit codes stable.
-4. **Beautiful**: use calm hierarchy, semantic color, stable symbols, and whitespace.
-
-When these conflict, the earlier lens wins. A pretty layout never justifies a wrong state
-or a polluted machine contract.
+Every decision follows the same priority order: **accurate first, human-usable second,
+agent/script-usable third, visually calm last**. A pretty panel never justifies a wrong
+state, an unclear recovery path, or a polluted machine contract.
 
 ## What the skill covers
 
@@ -97,7 +88,7 @@ or a polluted machine contract.
 | Runtime robustness | `NO_COLOR`, `FORCE_COLOR`, `TERM=dumb`, CI, non-TTY, narrow width, CJK/wide-character alignment, ASCII fallback, terminal cleanup |
 | Safety and trust | destructive confirmation, approval state, redaction, secret handling, audit-friendly tool output, recovery copy |
 
-## Before / after: ordinary CLI
+## Before / after: CLI and Interactive TUI
 
 The README shows a few representative cases. The PNG gallery after these examples carries
 the broader visual reference. Each representative image is a before/after comparison with
@@ -227,22 +218,7 @@ Code, file trees, diffs, and logs are different content shapes. They need differ
 containers, stable copy/paste text, semantic highlighting, truncation rules, and artifact or
 pager fallback for large output.
 
-### More CLI / TUI Cases
-
-The full visual reference covers CLI/TUI atoms such as help, bad arguments, recoverable
-errors, progress lifecycle, result summaries, tables, file trees, code blocks, diffs, logs,
-destructive previews, empty states, multi-select, machine JSON, pipe/`NO_COLOR` fallback,
-and redaction.
-
-![Ordinary CLI Before / After](./assets/ordinary-cli-before-after.png?v=readable-20260623)
-
-## Before / after: Interactive TUI
-
-Interactive terminal components are not just prettier prompts. They must define focus,
-selection, input mode, submit, confirm, cancel, disabled state, danger, key hints, fallback,
-and terminal cleanup before styling.
-
-### Multi-select and safe confirmation
+### 6. Multi-select and Safe Confirmation
 
 **Before**
 
@@ -261,6 +237,20 @@ DELETE? y
 This case keeps focus, selection, disabled reason, key hints, dangerous confirmation, and
 safe default separate. It is not a mandate to use this exact pointer, checkbox, or color
 scheme.
+
+Interactive terminal components are included here because a single multi-select example is
+not enough to justify a separate README section. The skill still treats Interactive TUI as a
+separate surface internally because pickers, forms, table browsers, pagers, code views, diff
+reviews, approvals, and completion menus need explicit keyboard and fallback contracts.
+
+### More CLI / TUI Cases
+
+The full visual reference covers CLI/TUI atoms such as help, bad arguments, recoverable
+errors, progress lifecycle, result summaries, tables, file trees, code blocks, diffs, logs,
+destructive previews, empty states, multi-select, machine JSON, pipe/`NO_COLOR` fallback,
+and redaction.
+
+![Ordinary CLI Before / After](./assets/ordinary-cli-before-after.png?v=readable-20260623)
 
 ## Before / after: Agent Chat TUI
 
@@ -292,7 +282,7 @@ composition are input UI until the user submits.
 **Before**
 
 ```text
-thinking thinking thinking
+spinner spinner spinner
 Running shell: shipctl status api
 exit 1 after 2.3s
 raw output mixed into assistant prose
@@ -303,8 +293,10 @@ partial hidden reasoning shown to user
 
 ![Before / after: Thinking and Tool Use](./assets/readme-cases/agent-tools.png)
 
-Never expose hidden chain-of-thought. Show concise observable summaries and bounded tool
-results with terminal state, duration, command identity, and evidence links when useful.
+Never expose hidden chain-of-thought. A spinner, dot, or small tool symbol can show that
+work is currently running, but it cannot be the only state signal. The transcript still
+needs observable summaries, bounded tool output, terminal state, duration, command identity,
+and a recovery path when the tool fails.
 
 ### 3. Approvals, Background Work, and Artifacts
 
@@ -351,11 +343,86 @@ Partial assistant prose...
 Off-TTY output removes live UI, cursor tricks, frames, animation, hidden role state, and raw
 ANSI. Machine streams use stable event types and documented schemas.
 
+### 5. Complete Agent Chat TUI Walkthrough
+
+This longer case shows how the same contract handles a real chat turn with input, tool
+state, code, file trees, diffs, errors, approvals, artifacts, and a follow-up draft. It is a
+walkthrough, not a required layout.
+
+**Before**
+
+```text
+User: fix deploy
+bot thinking...
+shell output pasted here
+exit 1
+some files changed maybe
+DELETE? y/n
+error
+You: why
+```
+
+**After**
+
+```text
+You
+  Fix the staging deploy failure and show the smallest code change.
+
+Assistant streaming
+  I will inspect the rollout, config, and the most recent deploy log first.
+
+tool call #17 shell
+  shipctl status api --env staging
+
+tool result #17 failed 2.3s
+  reason: registry auth expired
+  next: shipctl auth refresh
+
+Assistant final
+  Deploy is blocked by expired registry auth. After credentials are refreshed,
+  the smallest code change is one image tag update.
+
+workspace tree
+  services/api/
+    deploy.yaml
+    src/server.ts
+    README.md
+
+code src/server.ts
+  const port = Number(process.env.PORT ?? "8080");
+
+diff services/api/deploy.yaml
+  - image: registry.example.com/api:old
+  + image: registry.example.com/api:v1.8.2
+
+approval #9 waiting_approval
+  action: update staging deployment
+  target: services/api/deploy.yaml
+  effect: changes image tag only
+  default: Deny
+  keys: A approve once | D deny | V view diff
+
+error recovery
+  failed: registry auth expired
+  next: shipctl auth refresh
+
+artifact
+  reports/deploy-summary.json
+
+input draft
+  > Explain why this is the smallest change.|
+```
+
+The important part is separation: submitted messages are transcript, the current input is a
+draft, tool output is not assistant prose, code/tree/diff blocks keep their own shape,
+approval is trusted UI, and errors include recovery.
+
 ### More Agent Chat TUI Cases
 
 The full visual reference covers Agent Chat atoms such as transcript roles, input draft,
-multiline paste, IME/CJK composition, assistant streaming, tool use, tool results, choices,
-approvals, alerts, timers, background tasks, theme adaptation, suggestions, file mentions,
+multiline paste, IME/CJK composition, assistant streaming, thinking summaries, tool use,
+tool results, code blocks, file trees, diffs, choices, approvals, recoverable errors,
+alerts, timers, background tasks, theme adaptation, suggestions, file mentions,
 cancellation, approval outcomes, artifacts, plain non-TTY fallback, and NDJSON event mode.
 
 ![Agent Chat TUI Before / After](./assets/agent-chat-tui-before-after.png?v=readable-20260623)

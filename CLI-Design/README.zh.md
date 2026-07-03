@@ -26,59 +26,45 @@ cp -r skills/CLI-Design ~/.codex/skills/cli-design
 安装后，让 agent 在设计、实现、review 或改进 CLI / terminal TUI 输出时使用
 `cli-design`。
 
-GitHub 项目目录叫 `CLI-Design`。安装到 Codex 后的 skill 名是 `cli-design`，因为
-skill name 必须是小写 hyphen-case。
+## 他有什么用？
 
-## 默认基线
+CLI-Design 帮 agent 把 terminal output 做成生产级 UI/UX，而不是只把日志“变好看”。它主要解决这些问题：
 
-这个 skill 的默认基线不是“更花哨”，而是：
+- **让人更快读懂**：用户能直接看到结果、阻塞点、影响范围、证据和下一步，不需要从一堆输出里猜
+- **让机器更容易解析**：`stdout` 放数据，`stderr` 放进度和诊断；`--json`/NDJSON 不混 ANSI、
+  spinner、解释性废话或装饰框
+- **让交互更可靠**：prompt、picker、多选、approval、快捷键、取消、disabled state、危险操作和
+  non-TTY fallback 都先有明确契约
+- **让 Agent Chat TUI 更专业**：区分 transcript、输入草稿、streaming/final state、thinking 摘要、
+  tool call/result、代码块、文件树、diff、artifact、后台任务和 event fallback
+- **让视觉风格更统一**：颜色、符号、间距、边框、密度、对齐、亮/暗主题、`NO_COLOR`、
+  `TERM=dumb`、窄屏、CJK 宽字符都有一致规则
+- **让失败更像生产环境**：说明真实原因、影响对象、影响结果、恢复方案，保护 secret，危险操作默认安全，
+  exit behavior 稳定
 
-- **terminal surface 是协议**：输出是人、脚本、agent 之间的契约
-- **严格语义**：颜色、符号、留白、标签、状态词都必须有含义
-- **契约先于样式**：先定 stdout/stderr、schema、exit code、fallback 和风险
-- **低装饰**：普通输出不加彩虹，不默认 emoji，不给普通数据套框
-- **可脚本化优先**：`stdout` 放数据，`stderr` 放进度、诊断、提示；`--json` 必须纯净
-- **TTY 感知**：动画、光标技巧、链接、live redraw 只在交互式 TTY 出现
-- **主题与降级安全**：适配亮/暗终端，尊重 `NO_COLOR`、CI、`TERM=dumb`、窄屏、
-  CJK 宽字符和 ASCII fallback
-- **默认安全**：危险操作必须先展示影响范围，并默认 No
+它不是给所有 CLI 套同一个模板。安静的 CI 命令、密集的 table browser、Agent Chat terminal
+可以长得不一样，但它们都应该遵守同一套原则：状态真实，人能行动，机器能读，视觉只强化语义。
 
-唯一明确放宽的是 **expressive TTY notice**：低频、非阻塞、交互式通知可以用轻框、
-小 icon、链接下划线，例如版本更新提示。但一旦进入 pipe、CI、`NO_COLOR` 或
-`TERM=dumb`，必须退回普通文本。
+## 他是如何工作的？
 
-## 核心决策模型
+这个 skill 用的是路由流程，不是固定模板：
 
-决定颜色、符号、布局 chrome 或文案之前，先按这个顺序判断：
+1. **先判断读者和任务**：是人、脚本、AI agent、operator，还是混合读者？他们是在检查、执行、
+   恢复、自动化，还是和 agent 对话？
+2. **再判断 surface**：这是 Batch CLI、Interactive TUI、Agent Chat Terminal UI，还是
+   Machine-readable output？先分 surface，再谈颜色和布局。
+3. **定义输出和交互契约**：stdout/stderr、exit code、schema、event stream、prompt 行为、
+   approval 默认值、终态、fallback、redaction 都要先定清楚。
+4. **组织信息结构**：结果、原因、范围、证据、下一步、表格行、选择项、对话原子、代码、diff、log、
+   artifact，按读者真正需要的顺序呈现。
+5. **最后应用视觉语义**：颜色、符号、边框、留白和密度只服务于状态角色，比如 success、warning、
+   error、running、info、neutral、attention、cancelled、focus、selected、disabled、danger、
+   next action。
+6. **检查降级和安全**：pipe、CI、`NO_COLOR`、`FORCE_COLOR`、`TERM=dumb`、窄屏、Unicode fallback、
+   CJK 宽字符、secret redaction、危险操作默认值都要过一遍。
 
-```text
-reader task -> surface family -> interaction contract -> channel contract -> visual semantics
-```
-
-- **reader task**：发现、检查、行动、恢复、自动化、对话。
-- **surface family**：Batch CLI、Interactive TUI、Agent Chat Terminal UI、
-  Machine-readable output。
-- **interaction contract**：被动输出、确认、单选、多选、审批、中断、回放、live agent
-  session。
-- **channel contract**：TTY、pipe、`--json`、NDJSON、CI、`NO_COLOR`、`TERM=dumb`、
-  width、Unicode support、stdout/stderr、exit code。
-- **visual semantics**：状态、焦点、选中、disabled reason、危险、下一步、可复制目标、
-  次要信息、正文。
-
-通俗地说：先定信息结构，第二是布局，第三才是语义颜色。命令、flag、路径、URL、
-环境变量、配置 key 只有在它们是被说明的对象、选中项、可复制目标、当前操作或下一步动作时
-才用 accent。
-
-## 四个判断顺序
-
-每个 terminal 设计都按这个顺序判断：
-
-1. **准确**：状态、进度、数量、风险、原因、不确定性不能错。
-2. **人类可用**：用户一眼看见结果、阻塞点、下一步和恢复路径。
-3. **Agent / 脚本可用**：日志、schema、event、状态词和 exit code 能被稳定解析。
-4. **美观**：颜色克制，层次清楚，符号稳定，留白有结构。
-
-如果冲突，前面的优先。漂亮不能掩盖错误状态，也不能污染机器契约。
+所有判断都遵循同一个优先级：**先准确，再让人能用，再让 agent/脚本能用，最后才是视觉克制和好看**。
+漂亮的面板不能掩盖错误状态，不能让恢复路径变模糊，也不能污染机器契约。
 
 ## 覆盖范围
 
@@ -93,7 +79,7 @@ reader task -> surface family -> interaction contract -> channel contract -> vis
 | Runtime robustness | `NO_COLOR`、`FORCE_COLOR`、`TERM=dumb`、CI、non-TTY、窄屏、CJK/wide-character alignment、ASCII fallback、terminal cleanup |
 | Safety and trust | 危险确认、approval state、redaction、secret handling、audit-friendly tool output、recovery copy |
 
-## 普通 CLI：改造前 / 改造后
+## CLI 和 Interactive TUI：改造前 / 改造后
 
 README 主体只展示少数典型 case；完整视觉参考放在本节末尾图片中。每张典型图都是
 before/after 对比，图片里的 terminal 文案统一使用英文。例子是 recipe，不是模板：保留信息契约，
@@ -217,21 +203,7 @@ config line 14 image missing
 code、file tree、diff、log 是不同内容形态。它们需要不同容器、稳定可复制文本、语义高亮、
 截断规则，以及大输出时的 artifact 或 pager fallback。
 
-### 更多 CLI / TUI 例子
-
-完整视觉参考覆盖 CLI/TUI 输出原子：help、bad arguments、recoverable error、progress
-lifecycle、result summary、table、file tree、code block、diff、log、destructive preview、
-empty state、multi-select、machine JSON、pipe/`NO_COLOR` fallback 和 redaction。
-
-![Ordinary CLI Before / After](./assets/ordinary-cli-before-after.png?v=readable-20260623)
-
-## Interactive TUI：改造前 / 改造后
-
-Interactive terminal component 不只是“更好看的 prompt”。它必须先定义 focus、selection、
-input mode、submit、confirm、cancel、disabled state、danger、key hint、fallback 和 terminal
-cleanup，再谈样式。
-
-### 多选和安全确认
+### 6. 多选和安全确认
 
 **改造前**
 
@@ -249,6 +221,19 @@ DELETE? y
 
 这个 case 把 focus、selection、disabled reason、key hint、危险确认和安全默认值分开。它不是
 强制使用某一种 pointer、checkbox 或配色。
+
+这里把 Interactive TUI 合并到 CLI/TUI 例子里，是因为一个 multi-select case 单独成章容易让人误会
+成“只有一种 TUI 模板”。skill 内部仍然把 Interactive TUI 当作独立 surface，因为 picker、form、
+table browser、pager、code view、diff review、approval、completion menu 都需要明确的键盘语义和
+fallback 契约。
+
+### 更多 CLI / TUI 例子
+
+完整视觉参考覆盖 CLI/TUI 输出原子：help、bad arguments、recoverable error、progress
+lifecycle、result summary、table、file tree、code block、diff、log、destructive preview、
+empty state、multi-select、machine JSON、pipe/`NO_COLOR` fallback 和 redaction。
+
+![Ordinary CLI Before / After](./assets/ordinary-cli-before-after.png?v=readable-20260623)
 
 ## Agent Chat TUI：改造前 / 改造后
 
@@ -278,7 +263,7 @@ You: explain this error and suggest the smallest fix
 **改造前**
 
 ```text
-thinking thinking thinking
+spinner spinner spinner
 Running shell: shipctl status api
 exit 1 after 2.3s
 raw output mixed into assistant prose
@@ -289,8 +274,8 @@ partial hidden reasoning shown to user
 
 ![Before / after: Thinking and Tool Use](./assets/readme-cases/agent-tools.png)
 
-不要展示 hidden chain-of-thought。可以展示可观察摘要和受限 tool 输出，并带上终态、
-duration、command identity 和必要 evidence。
+不要展示 hidden chain-of-thought。spinner、动态点、小 tool icon 可以表示“正在运行”，但不能成为唯一状态信号。
+transcript 里仍然要有可观察摘要、受限 tool 输出、终态、duration、command identity，以及失败时的恢复路径。
 
 ### 3. 审批、后台任务和 artifact
 
@@ -336,12 +321,84 @@ Partial assistant prose...
 非 TTY 下不保留 live UI、光标控制、动画、边框、隐藏 role state 或 raw ANSI。机器事件使用
 稳定 event type 和已文档化 schema。
 
+### 5. 完整 Agent Chat TUI 长对话
+
+这个长 case 把输入框、tool state、代码块、文件树、diff、错误恢复、approval、artifact 和后续输入草稿放在同一轮里。
+它是 walkthrough，不是强制布局。
+
+**改造前**
+
+```text
+User: fix deploy
+bot thinking...
+shell output pasted here
+exit 1
+some files changed maybe
+DELETE? y/n
+error
+You: why
+```
+
+**改造后**
+
+```text
+You
+  Fix the staging deploy failure and show the smallest code change.
+
+Assistant streaming
+  I will inspect the rollout, config, and the most recent deploy log first.
+
+tool call #17 shell
+  shipctl status api --env staging
+
+tool result #17 failed 2.3s
+  reason: registry auth expired
+  next: shipctl auth refresh
+
+Assistant final
+  Deploy is blocked by expired registry auth. After credentials are refreshed,
+  the smallest code change is one image tag update.
+
+workspace tree
+  services/api/
+    deploy.yaml
+    src/server.ts
+    README.md
+
+code src/server.ts
+  const port = Number(process.env.PORT ?? "8080");
+
+diff services/api/deploy.yaml
+  - image: registry.example.com/api:old
+  + image: registry.example.com/api:v1.8.2
+
+approval #9 waiting_approval
+  action: update staging deployment
+  target: services/api/deploy.yaml
+  effect: changes image tag only
+  default: Deny
+  keys: A approve once | D deny | V view diff
+
+error recovery
+  failed: registry auth expired
+  next: shipctl auth refresh
+
+artifact
+  reports/deploy-summary.json
+
+input draft
+  > Explain why this is the smallest change.|
+```
+
+重点不是长得像这一版，而是边界清楚：提交后的消息是 transcript，当前输入是 draft；tool output
+不是 assistant prose；code、tree、diff 保持各自形态；approval 是可信 UI；error 必须给恢复路径。
+
 ### 更多 Agent Chat TUI 例子
 
 完整视觉参考覆盖 Agent Chat 原子：transcript role、输入草稿、多行粘贴、IME/CJK、
-assistant streaming、tool use、tool result、choice、approval、alert、timer、background task、
-主题适配、suggestion、file mention、cancel、approval outcome、artifact、plain non-TTY fallback
-和 NDJSON event mode。
+assistant streaming、thinking 摘要、tool use、tool result、code block、file tree、diff、choice、
+approval、recoverable error、alert、timer、background task、主题适配、suggestion、file mention、
+cancel、approval outcome、artifact、plain non-TTY fallback 和 NDJSON event mode。
 
 ![Agent Chat TUI Before / After](./assets/agent-chat-tui-before-after.png?v=readable-20260623)
 
