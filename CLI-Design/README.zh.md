@@ -272,7 +272,7 @@ partial hidden reasoning shown to user
 
 **改造后**
 
-![Before / after: Thinking and Tool Use](./assets/readme-cases/agent-tools.png)
+![Before / after: Thinking and Tool Use](./assets/readme-cases/agent-tools.png?v=thinking-contract-20260703)
 
 不要展示 hidden chain-of-thought。spinner、动态点、小 tool icon 可以表示“正在运行”，但不能成为唯一状态信号。
 transcript 里仍然要有可观察摘要、受限 tool 输出、终态、duration、command identity，以及失败时的恢复路径。

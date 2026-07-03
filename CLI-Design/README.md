@@ -291,7 +291,7 @@ partial hidden reasoning shown to user
 
 **After**
 
-![Before / after: Thinking and Tool Use](./assets/readme-cases/agent-tools.png)
+![Before / after: Thinking and Tool Use](./assets/readme-cases/agent-tools.png?v=thinking-contract-20260703)
 
 Never expose hidden chain-of-thought. A spinner, dot, or small tool symbol can show that
 work is currently running, but it cannot be the only state signal. The transcript still
