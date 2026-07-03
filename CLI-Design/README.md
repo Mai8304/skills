@@ -3,7 +3,7 @@
 > A production-grade agent skill for designing terminal surfaces that are accurate first,
 > human-usable second, script/agent-usable third, and visually calm last.
 
-**English** · [中文](./README.zh.md) · Version `2.0.2`
+**English** · [中文](./README.zh.md) · Version `2.0.3`
 
 This skill is for terminal surfaces: what a CLI prints, how a TUI behaves, how color and
 symbols carry state, how progress and errors recover, how output degrades in pipes and CI,
@@ -207,11 +207,32 @@ Machine mode is a contract. It must not mix ANSI, spinner frames, prose wrappers
 decorative blank lines into stdout. Secrets must be redacted in human output, logs,
 transcripts, fixtures, and machine events.
 
+### 5. Content Blocks, File Trees, Diff, and Logs
+
+**Before**
+
+```text
+FILES src main go internal deploy go README md
+config line 14 image missing
+- old image registry/app:old
++ new image registry/app:new
+2026-07-02 INFO ok WARN slow ERROR failed
+```
+
+**After**
+
+![Before / after: Content blocks, file trees, diff, and logs](./assets/readme-cases/content-blocks.png)
+
+Code, file trees, diffs, and logs are different content shapes. They need different
+containers, stable copy/paste text, semantic highlighting, truncation rules, and artifact or
+pager fallback for large output.
+
 ### More CLI / TUI Cases
 
 The full visual reference covers CLI/TUI atoms such as help, bad arguments, recoverable
-errors, progress lifecycle, result summaries, tables, destructive previews, empty states,
-multi-select, machine JSON, pipe/`NO_COLOR` fallback, and redaction.
+errors, progress lifecycle, result summaries, tables, file trees, code blocks, diffs, logs,
+destructive previews, empty states, multi-select, machine JSON, pipe/`NO_COLOR` fallback,
+and redaction.
 
 ![Ordinary CLI Before / After](./assets/ordinary-cli-before-after.png?v=readable-20260623)
 

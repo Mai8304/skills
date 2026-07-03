@@ -2,7 +2,7 @@
 
 > 这个 skill 用来设计生产级 terminal surface：先保证准确，再保证人能快速读懂，再保证脚本和 AI agent 能解析，最后才是视觉上的克制和好看。
 
-[English](./README.md) · **中文** · 版本 `2.0.2`
+[English](./README.md) · **中文** · 版本 `2.0.3`
 
 它关注 CLI 和 terminal TUI 在终端里“怎么说话、怎么交互”：颜色、符号、状态、进度、
 错误、布局、表格、树、diff、JSON、管道、CI、`NO_COLOR`，以及 Agent Chat Terminal UI
@@ -198,11 +198,30 @@ connected with token sk-live-123456
 机器模式是契约，不能混进 ANSI、spinner frame、prose wrapper 或装饰性空行。secret 必须在
 human output、log、transcript、fixture、machine event 中先 redaction。
 
+### 5. 内容块、文件树、diff 和日志
+
+**改造前**
+
+```text
+FILES src main go internal deploy go README md
+config line 14 image missing
+- old image registry/app:old
++ new image registry/app:new
+2026-07-02 INFO ok WARN slow ERROR failed
+```
+
+**改造后**
+
+![Before / after: Content blocks, file trees, diff, and logs](./assets/readme-cases/content-blocks.png)
+
+code、file tree、diff、log 是不同内容形态。它们需要不同容器、稳定可复制文本、语义高亮、
+截断规则，以及大输出时的 artifact 或 pager fallback。
+
 ### 更多 CLI / TUI 例子
 
 完整视觉参考覆盖 CLI/TUI 输出原子：help、bad arguments、recoverable error、progress
-lifecycle、result summary、table、destructive preview、empty state、multi-select、machine
-JSON、pipe/`NO_COLOR` fallback 和 redaction。
+lifecycle、result summary、table、file tree、code block、diff、log、destructive preview、
+empty state、multi-select、machine JSON、pipe/`NO_COLOR` fallback 和 redaction。
 
 ![Ordinary CLI Before / After](./assets/ordinary-cli-before-after.png?v=readable-20260623)
 
