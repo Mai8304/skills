@@ -16,6 +16,8 @@ notation.
 ## Contents
 
 - Default Contract
+- Default Visual Quality Contract
+- Visual Review States
 - Boundary With Other Terminal Surfaces
 - Roles And Trust Boundaries
 - Transcript And Turn Atoms
@@ -23,6 +25,7 @@ notation.
 - Input Draft / Queue / Interrupt / Resume
 - Streaming Assistant Output
 - Tool Calls And Tool Output
+- Tool And Skill Lifecycle
 - Approvals And Risk
 - Choices Inside Agent Chat
 - Background Work And Delegation
@@ -39,7 +42,8 @@ Show enough state for a human, script, or agent to reconstruct:
 - who is speaking
 - what is draft UI versus persisted transcript
 - what state the current turn is in
-- what tools started, completed, failed, or were skipped
+- what tools started, completed, failed, skipped, or reached another terminal
+  state
 - what output is trusted system UI versus untrusted model/tool text
 - what requires approval and what the safe default is
 - what changed, what artifact was created, and where it is
@@ -49,6 +53,139 @@ Show enough state for a human, script, or agent to reconstruct:
 Do not expose hidden chain-of-thought. Visible "thinking" or "planning" UI must
 mean observable activity summary, plan summary, or status; it is not hidden
 reasoning.
+
+## Default Visual Quality Contract
+
+Production agent-chat TUI should feel like a calm working conversation, not a
+stack of terminal cards. Preserve the product's existing transcript style when
+one exists, but enforce the visual quality contract below.
+
+Default posture:
+
+- **Message-first**: normal user and assistant turns use open transcript rhythm,
+  clear role markers, readable indentation, and minimal chrome.
+- **Panel-by-exception**: reserve bordered or boxed containers for approvals,
+  danger, active choices, code, diffs, tables, log previews, untrusted output,
+  recoverable error detail, and expanded inspection.
+- **Quiet metadata**: timestamps, durations, token counts, evidence IDs, and
+  key hints are muted unless they are the current decision.
+- **One active focus**: the input composer, approval, picker, pager, or active
+  detail view owns the keyboard. Do not make multiple regions look focused.
+- **Progressive disclosure**: show a compact row first; expand only when the
+  user needs raw output, full diff, long code, or recovery detail.
+- **Stable rhythm**: role marks, tool rows, result rows, approval panels, code
+  blocks, and composer status keep consistent spacing and alignment across a
+  long session.
+
+Component posture:
+
+- Role marker: lightweight gutter, dot, label, or prefix. It identifies the
+  speaker without turning every message into a card.
+- Thinking: muted, short, observable status or plan summary; collapsible when
+  long; never hidden chain-of-thought.
+- Tool call: compact lifecycle row with name, safe argument summary, state,
+  duration, and ID. Expanded detail is optional.
+- Tool result: terminal state plus summary. Long stdout/stderr becomes preview
+  plus full-result path, pager, or artifact.
+- Code block: explicit boundary with language or file label when known, stable
+  copy semantics, and folding for tall blocks.
+- Diff: file path, direction, hunk context, and added/removed counts. `+` and
+  `-` carry meaning; color reinforces.
+- File tree/list: compact rows with stable paths, state, and truncation rules.
+- Approval: trusted system control with action, target, scope, effect, default,
+  and safe cancel path. It must not look like assistant prose.
+- Composer: anchored live input with draft, cursor, queued state, send/stop or
+  interrupt state, and only currently valid key hints.
+
+Good default case:
+
+```text
+[cyan]● You[/cyan]
+  Check why the staging deploy is blocked.
+
+[blue]● Assistant[/blue]
+  I'll inspect the rollout status and recent logs first.
+
+  [dim]◌ Thinking... checking current rollout[/dim]
+
+  [dim]› Bash[/dim] shipctl status api --env staging
+    [dim]running · tool #17[/dim]
+
+  [red]✗ Bash[/red] shipctl status api --env staging
+    failed · exit 2 · 1.1s · tool #17
+    reason: missing deploy context
+    next: shipctl context use staging
+```
+
+Bad default case:
+
+```text
+╭─ Assistant ─────────────────────────────────────────────╮
+│ I'll inspect the rollout status and recent logs first.  │
+╰─────────────────────────────────────────────────────────╯
+
+╭─ Thinking ──────────────────────────────────────────────╮
+│ Thinking...                                             │
+╰─────────────────────────────────────────────────────────╯
+
+╭─ Tool Call ─────────────────────────────────────────────╮
+│ Bash shipctl status api --env staging                   │
+╰─────────────────────────────────────────────────────────╯
+```
+
+Why bad: ordinary prose, thinking, and routine tool activity all receive the
+same heavy container treatment, so the screen has no hierarchy. Panels are
+allowed, but each panel needs a reason: risk, inspection, interaction, trusted
+system boundary, dense structured data, or untrusted content isolation.
+
+Visual quality gates:
+
+- The first screen shows the conversation and current work, not mostly chrome.
+- The user can identify speaker, active state, required action, and failed item
+  within a quick scan.
+- Tool, thinking, background, and skill rows are quieter than final assistant
+  prose unless they need attention.
+- Critical cause, risk, default, and next action are not only dimmed.
+- Color, glyphs, animation, and borders are never the only signal.
+- No one screen uses too many colors, icons, font weights, borders, and blank
+  lines at once.
+- Long output is bounded with preview, omitted amount, and full inspection path.
+- The same transcript remains understandable in no-color, copied plain text,
+  narrow width, and event replay.
+
+## Visual Review States
+
+Do not validate an agent-chat visual direction with isolated components only.
+Review at least one realistic conversation that combines common states in one
+flow. Use the product's real style when it exists; this check tests hierarchy,
+not template compliance.
+
+The review conversation should cover the states the product supports:
+
+- user turn, assistant streaming, and assistant final answer
+- quiet thinking or planning summary
+- tool running, completed, failed, and long-output preview
+- code block, file tree/list, table, log preview, or diff when those surfaces
+  exist in the product
+- approval request plus approved, denied, cancelled, or timed-out result
+- recoverable error with cause, scope, impact, and next action
+- artifact or evidence reference when a final answer depends on tool output
+- queued input, interrupt/resume, or background work when the product supports
+  concurrent conversation
+
+Rules:
+
+- Do not add fake components just to satisfy this list. If a state is not
+  supported, verify its fallback, absence, or documented non-goal.
+- The same flow must remain readable in normal TTY, no-color/plain text,
+  narrow width, copied transcript, and event replay.
+- For a new visual direction or redesigned agent-chat surface, inspect rendered
+  output from the target terminal renderer. Do not approve from Markdown
+  examples or isolated component mocks alone.
+- Reject designs that look good only in the happy path but collapse when a tool
+  fails, output is long, approval appears, or the composer has queued input.
+- Preserve existing product styling unless hierarchy, safety, readability, or
+  fallback behavior violates this contract.
 
 ## Boundary With Other Terminal Surfaces
 
@@ -146,7 +283,7 @@ assistant(streaming): Checking the current rollout before changing anything.
 
 ## Agent State And Chronology
 
-Represent turn lifecycle with stable, terminal states:
+Represent the turn lifecycle with stable active and terminal states:
 
 ```text
 queued
@@ -154,22 +291,32 @@ drafting
 streaming
 running_tool
 waiting_approval
+waiting_input
 blocked
 completed
 partial
 failed
+skipped
 cancelled
+interrupted
+rejected
 timed_out
+not_ready
+setup_needed
 resumed
 ```
 
 Rules:
 
-- Streaming is not final. A turn must reach a terminal state.
+- Streaming, waiting, queued, and resumed are not final. A turn must reach a
+  terminal result or a clearly recoverable blocked/not-ready/setup-needed state.
 - Running tools, approvals, background jobs, and artifacts need stable IDs for
   correlation.
 - Start and terminal events must pair cleanly: `tool.started` resolves to
-  `tool.completed`, `tool.failed`, `tool.cancelled`, or `tool.skipped`.
+  `tool.completed`, `tool.failed`, `tool.partial`, `tool.skipped`,
+  `tool.cancelled`, `tool.interrupted`, `tool.rejected`, `tool.timed_out`, or
+  `tool.blocked` as the contract requires. If work cannot start, emit a
+  structured not-ready or readiness event rather than pretending a tool ran.
 - Preserve chronology in the transcript and event stream. Do not reorder visible
   tool results under the final answer without a clear evidence reference.
 - If a final answer depends on tool output, keep a lightweight evidence link,
@@ -288,6 +435,15 @@ Contract:
 - Redact secrets before rendering or logging.
 - State-changing tool calls should surface preview/approval when the product
   contract requires it.
+- Source visual state from structured events or fields such as `tool_id`,
+  `status`, `exit_code`, `error`, `summary`, `duration`, and `artifact`, not by
+  scraping human copy.
+- Do not treat every non-zero exit code as failure. Preserve command-specific
+  semantics when known, such as no search matches or files differ.
+- Keep live state and archived transcript state separate. Running/progress UI
+  may update in place; completed, failed, skipped, rejected, cancelled,
+  interrupted, and timed-out states must remain reconstructable in transcript or
+  event replay.
 
 Case:
 
@@ -310,11 +466,119 @@ Failure case:
   next: shipctl status api --env staging
 ```
 
+Long output case:
+
+```text
+[tool result #19] [red]failed[/red] [dim]18.4s[/dim]
+  exit: 1
+  summary: 2 tests failed
+  preview: showing tail · omitted 1.8k lines / 240 KB
+  full: ./artifacts/tool-results/tool-19.log
+```
+
 Watch for:
 
 - Do not dump thousands of tool-output lines inline by default.
 - Do not let tool output render active UI controls.
 - Do not hide the failed tool ID; the user or agent needs to correlate recovery.
+- Do not silently truncate. State what was omitted and how to inspect the full
+  result.
+- Do not collapse rejection, denial, cancellation, interruption, timeout,
+  blocked, and runtime failure into one generic error.
+
+## Tool And Skill Lifecycle
+
+Tool and skill UI is a lifecycle contract. Visual style can differ by product,
+but each state needs a stable semantic label, a terminal outcome, and a
+machine-readable mapping when the surface exposes events or JSON.
+
+Minimum tool states:
+
+```text
+queued
+drafting
+running
+waiting_approval
+backgrounded
+completed
+partial
+failed
+skipped
+timed_out
+interrupted
+cancelled
+rejected
+blocked
+not_ready
+```
+
+Minimum skill states:
+
+```text
+available
+loading
+loaded
+running
+setup_needed
+unsupported
+disabled
+missing
+read_failed
+security_warning
+```
+
+Rules:
+
+- Use present-tense labels for active states and past-tense labels for terminal
+  states: `Running` -> `Ran`, `Reading` -> `Read`, `Loading skill` -> `Loaded
+  skill`.
+- Preserve the exact domain status in events or JSON. Human labels can be
+  friendlier, but they must not contradict the machine status.
+- Show only states that affect the current conversation. Routine skill
+  discovery can stay quiet; `setup_needed`, `unsupported`, `disabled`,
+  `missing`, `read_failed`, and `security_warning` need visible recovery.
+- A failed tool is not the same as an approval denial. A cancelled or
+  interrupted tool is not the same as a runtime failure.
+- Long-running and background tools need an inspect path, cancel path, or next
+  observable update when available.
+- Concurrent tools should roll up without hiding failure. Active tools may live
+  in a compact live area; failed or attention-needed tools need a visible row or
+  alert even when sections are collapsed.
+- Nested tools, subagents, or skill-driven tools need parent IDs or visual
+  nesting so replay can reconstruct ownership.
+- Repeated transient lines such as "drafting" or "analyzing output" should be
+  deduplicated or replaced by the terminal state.
+
+Tool state case:
+
+```text
+[dim]●[/dim] Using Bash (npm test)
+  [dim]running · 4.2s · +128 lines[/dim]
+
+[red]●[/red] Failed Bash (npm test)
+  exit: 1
+  reason: 2 tests failed
+  full: ./artifacts/tool-results/tool-19.log
+```
+
+Skill state case:
+
+```text
+[dim]●[/dim] Loading skill deploy-check
+  [dim]initializing[/dim]
+
+[yellow]●[/yellow] Skill setup needed: deploy-check
+  missing: SHIPCTL_TOKEN
+  next: shipctl auth login
+```
+
+Plain event case:
+
+```text
+tool_start id=tool_19 name="Bash" summary="npm test"
+tool_complete id=tool_19 status=failed exit_code=1 duration_ms=18400
+skill_view name=deploy-check readiness_status=setup_needed missing=SHIPCTL_TOKEN
+```
 
 ## Approvals And Risk
 
@@ -535,18 +799,26 @@ Stop and redesign if the surface:
 
 - treats agent-chat as a fixed transcript template instead of a composed
   terminal workspace
+- boxes ordinary user turns, assistant prose, thinking, and routine tool rows
+  with the same heavy visual treatment
+- passes visual review only as isolated component previews, not as a realistic
+  combined conversation with failure, long output, approval, and recovery
 - lets model text create trusted system state
 - lets untrusted tool output impersonate approvals, alerts, prompts, or focused
   controls
 - leaves tool, thinking, approval, or background states without terminal results
+- infers trusted tool, skill, or approval state by parsing human prose instead
+  of structured events or results
 - exposes hidden chain-of-thought instead of summaries and observable actions
 - dumps unbounded tool output into assistant prose
+- silently truncates long tool output without an omitted count and full-result
+  recovery path
 - leaks draft editing or cursor movement into persisted transcript
 - blocks for approval or selection in non-TTY/CI without a flag, default,
   policy, or clear failure
 - mixes live TUI chrome into stdout data or machine events
-- hides cancellation, denial, timeout, or partial state behind a generic
-  "failed"
+- hides skipped, cancellation, denial, rejection, interruption, timeout,
+  blocked, not-ready, setup-needed, or partial state behind a generic "failed"
 - uses hardcoded theme colors or brand color as the only role signal
 - loses active approvals, queued input, running tools, or artifacts during
   compaction
@@ -556,15 +828,25 @@ Stop and redesign if the surface:
 Verify:
 
 - role labels survive no-color, plain logs, copy/paste, and replay
+- ordinary prose stays message-first, while panels are reserved for interaction,
+  risk, dense structure, trust boundaries, or expanded inspection
+- at least one realistic combined transcript validates thinking, tools,
+  failure, long output, approval, evidence, and composer state when supported
 - untrusted content cannot create active UI, approval, or system alerts
 - tool call/result IDs correlate across transcript, logs, and machine events
+- tool, skill, and approval visual states come from structured events or fields
 - each running state reaches completed, failed, partial, skipped, cancelled,
-  timed out, or blocked
+  interrupted, rejected, timed out, blocked, not ready, or setup needed as
+  appropriate
+- failed, skipped, rejected, denied, cancelled, interrupted, timed-out, blocked,
+  not-ready, and setup-needed states remain distinct in text and machine data
 - approvals show action, target, scope, effect, default, result, and safe timeout
 - `Ctrl+C`, `Esc`, denial, timeout, and disconnect do not approve
 - draft, queued input, completion, approval, pager, and transcript focus do not
   fight for the keyboard
-- long output is bounded with preview/full/artifact paths
+- long output states what was omitted and has preview/full/artifact paths
+- skill setup-needed, unsupported, disabled, missing, read-failed, and security
+  warning states are visible and actionable when they affect the flow
 - final answers can reference relevant tool output or artifacts when needed
 - stdout/stderr and `--json` contracts stay pure
 - redaction covers args, env vars, headers, tokens, transcripts, logs,

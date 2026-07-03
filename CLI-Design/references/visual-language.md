@@ -23,6 +23,7 @@ violate a hard invariant.
 - Default Contract
 - Semantic Roles
 - Status Colors And Symbols
+- Tool / Skill Lifecycle Tokens
 - Focus / Selection / Input / Disabled / Danger
 - Symbols And ASCII Fallback
 - Format / Density / Spacing / Borders
@@ -54,6 +55,7 @@ info
 neutral
 attention
 danger
+cancelled
 focus
 selection
 disabled
@@ -77,9 +79,10 @@ agent-chat terminal UI:
 
 - **text / muted / metadata**: body text, supporting details, timestamps, counts,
   hints, and secondary paths.
-- **status**: outcome or lifecycle state such as completed, changed, unchanged,
-  empty, failed, running, partial, skipped, cancelled, timed out, blocked, or
-  waiting approval.
+- **status**: outcome, readiness, or lifecycle state such as completed,
+  changed, unchanged, empty, failed, running, partial, skipped, cancelled,
+  interrupted, rejected, timed out, blocked, not ready, setup needed, or waiting
+  approval.
 - **focus**: the single current keyboard target.
 - **selection**: data selected by the user. It may be multiple; it is not the
   same as focus.
@@ -108,6 +111,7 @@ running
 info
 neutral
 attention
+danger
 cancelled
 ```
 
@@ -124,6 +128,7 @@ running   -> active token  + spinner/RUN + running/waiting
 info      -> info token    + i / INFO + informational context
 neutral   -> default/muted + NOOP     + no-op/unchanged/empty
 attention -> warning/attention token + label + needs input/approval/waiting
+danger    -> danger token + explicit risk text + destructive/privileged action
 cancelled -> warning/neutral token + CANCELLED + interrupted/cancelled
 ```
 
@@ -156,10 +161,12 @@ Rules:
 
 - Separate **state**, **severity**, and **role**. `error` means failure already
   happened; `danger` means a risky action is being proposed.
-- Keep partial, degraded, warning, skipped, and cancelled distinct in text and
-  machine data even when they share a warning visual role.
-- Treat `running` as non-terminal. It must resolve to completed, failed,
-  cancelled, timed out, skipped, or blocked.
+- Keep partial, degraded, warning, skipped, cancelled, interrupted, rejected,
+  blocked, not-ready, and setup-needed states distinct in text and machine data
+  even when they share a warning or attention visual role.
+- Treat `running` as non-terminal. It must resolve to completed, changed,
+  unchanged, failed, partial, skipped, cancelled, interrupted, rejected, timed
+  out, blocked, not ready, or setup needed.
 - Use `info` for low-priority context. Do not let it collide with focus, link,
   copy target, or brand accent.
 - Empty or no-op states are usually neutral, not errors.
@@ -168,6 +175,86 @@ Rules:
 ```text
 [green]✓[/green] Deploy completed
 [dim]changed: api · unchanged: worker · skipped: legacy[/dim]
+```
+
+## Tool / Skill Lifecycle Tokens
+
+Tool and skill visuals should share semantic state, not a fixed component
+template. Map domain lifecycle states into a small token set, then keep the
+exact domain state in text, events, or JSON.
+
+Default mapping:
+
+| Domain state | Visual role | Symbol fallback | Human label |
+|---|---|---:|---|
+| `queued` | muted / neutral | `...` | queued |
+| `drafting` | muted / running | `...` | drafting |
+| `running` | running / active | `RUN` | running |
+| `waiting_approval` | attention | `!` | approval required |
+| `backgrounded` | info / muted | `BG` | running in background |
+| `completed` | success | `OK` | completed |
+| `partial` | warning | `PARTIAL` | partial |
+| `failed` | error | `ERR` | failed |
+| `skipped` | neutral / warning | `SKIP` | skipped |
+| `timed_out` | error / warning | `TIMEOUT` | timed out |
+| `interrupted` | warning / neutral | `INT` | interrupted |
+| `cancelled` | warning / neutral | `CANCELLED` | cancelled |
+| `rejected` | warning / neutral | `DENIED` | rejected |
+| `blocked` | attention / warning | `BLOCKED` | blocked |
+| `not_ready` | info / warning | `WAIT` | not ready |
+| `setup_needed` | attention / warning | `SETUP` | setup needed |
+| `unsupported` | disabled / warning | `UNSUPPORTED` | unsupported |
+| `disabled` | disabled | `DISABLED` | disabled |
+| `missing` / `read_failed` | error | `ERR` | missing / read failed |
+| `security_warning` | danger / warning | `WARN` | security warning |
+
+Rules:
+
+- Keep state, role, and severity separate. `waiting_approval` is not failure;
+  `danger` is before a risky action; `error` is after something failed.
+- Active states use present-tense verbs. Terminal states use past-tense or
+  outcome words.
+- Running indicators are TTY-only and must resolve to a terminal state.
+- A yellow/warning row must still say whether it is `partial`, `skipped`,
+  `interrupted`, `rejected`, `blocked`, `not_ready`, `setup_needed`, or
+  `cancelled`.
+- Skill availability is usually quiet. Show skill state when it affects action:
+  setup needed, unsupported platform, disabled skill, missing file, read
+  failure, or security warning.
+- Long output uses muted detail for counts and inspect path, but not for the
+  only failure cause or recovery step.
+- Do not encode status by symbol alone. Pair `●`, `✓`, `✗`, spinner, or color
+  with text.
+- If a product uses role dots, keep dot meaning stable across the transcript:
+  dim/active for running, success for completed, error for failed, warning for
+  attention-needed.
+
+Case:
+
+```text
+[dim]●[/dim] Using Bash (npm test)
+  [dim]running · 4.2s · +128 lines[/dim]
+
+[green]●[/green] Used Bash (npm test)
+  312 passed · 2 skipped
+
+[red]●[/red] Failed Bash (npm test)
+  exit: 1
+  reason: 2 tests failed
+  next: open ./artifacts/tool-results/tool-19.log
+
+[yellow]●[/yellow] Skill setup needed: deploy-check
+  missing: SHIPCTL_TOKEN
+  next: shipctl auth login
+```
+
+Plain fallback:
+
+```text
+RUN  Bash npm test 4.2s +128 lines
+OK   Bash npm test 312 passed 2 skipped
+ERR  Bash npm test exit=1 reason="2 tests failed"
+SETUP skill deploy-check missing=SHIPCTL_TOKEN
 ```
 
 ## Focus / Selection / Input / Disabled / Danger
@@ -454,6 +541,11 @@ runes, or string length.
 Agent-chat terminal UI needs role, trust, and chronology to survive in the
 transcript and in plain logs.
 
+Default visual stance: message-first, panel-by-exception. Normal user and
+assistant turns should read like a conversation with light role markers and
+stable indentation. Use panels only when the UI needs interaction, trust
+boundary, risk emphasis, dense structure, or expanded inspection.
+
 Roles:
 
 ```text
@@ -494,6 +586,17 @@ api is already running v1.8.2 in staging.
 Rules:
 
 - System-owned UI must be visually distinct from model text.
+- Assistant prose, routine thinking, tool lifecycle rows, background work, and
+  metadata should not compete for the same visual weight.
+- Thinking is muted observable status or plan summary, not hidden reasoning and
+  not a decorative animation beside long prose.
+- Tool rows start compact: name, safe argument summary, state, duration, and ID.
+  Expand for raw output, long logs, failure detail, or audit evidence.
+- Code, diff, file tree/list, table, log preview, and untrusted output are
+  bounded containers with a reason; ordinary conversation is not boxed by
+  default.
+- Approval and danger panels are intentionally more prominent than routine tool
+  rows because they require a trusted decision.
 - Model text cannot create system state. If the assistant says "approved", that
   is not an approval unless a system/approval event says so.
 - Tool call, tool running state, tool output, and tool result are separate
@@ -611,6 +714,11 @@ Stop and redesign if:
 
 - Color is the only status signal.
 - Success, warning, and error differ only by green, yellow, and red.
+- Tool, skill, approval, skipped work, cancellation, interruption, timeout,
+  rejection, blocked, not-ready, setup-needed, and runtime failure all collapse
+  into one "error" visual and one "failed" word.
+- Skipped, not-ready, setup-needed, unsupported, and disabled states look like
+  successful completion.
 - Focus, selection, default, submit, and confirm look like the same state.
 - Danger and error are conflated.
 - Disabled items are only gray and do not explain why.

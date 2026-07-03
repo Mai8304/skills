@@ -42,7 +42,8 @@ Confirm:
 - contract: stdout/stderr, exit code, status vocabulary, schema, event IDs,
   key bindings, terminal state, artifact path, fallback format
 - recovery: what happens on failure, empty result, no-op, partial success,
-  cancellation, timeout, blocked state, or approval denial
+  cancellation, interruption, rejection, timeout, blocked, not-ready,
+  setup-needed, or approval-denied state
 
 If the surface is mixed, review each contract separately. A chat command can
 have a transcript lane, tool progress on stderr, JSON event stream on stdout,
@@ -66,10 +67,12 @@ Check:
 
 - The same operation/object is named in human output and machine output.
 - The terminal state is stable: completed, failed, partial, skipped,
-  cancelled, timed out, blocked, changed, or unchanged as appropriate.
+  cancelled, interrupted, rejected, timed out, blocked, not ready, setup
+  needed, changed, or unchanged as appropriate.
 - Visual role matches semantic role: danger before action, error after failure,
   warning for degraded/partial/deprecated, neutral for no-op/empty.
-- `ok`, `status`, event names, and exit code do not contradict each other.
+- `ok`, `status`, `readiness_status`, approval result, event names, and exit
+  code do not contradict each other.
 - Approval result is not confused with operation result.
 - Friendly copy does not hide object, scope, count, artifact, or recovery.
 
@@ -97,9 +100,13 @@ warning / degraded / deprecation
 partial
 skipped
 cancelled
+interrupted
+rejected / denied
 timed out
 failed
 blocked / waiting_approval
+not ready
+setup needed
 ```
 
 Good:
@@ -135,13 +142,15 @@ Check:
 - NDJSON emits one valid JSON object per line.
 - Pipe/plain output has no ANSI, cursor control, spinners, prompts, pagers, or
   decorative frames.
-- Exit code matches human and machine status.
+- Exit code matches human status, machine `status`, `readiness_status`, and
+  approval result.
 - Field names, enum values, units, timestamps, ordering, IDs, and schema
   versions are stable.
 - Structured errors include code, bounded message, retryability when known,
   target/scope when useful, and structured recovery.
-- Partial, skipped, unchanged, cancelled, timed-out, denied, and blocked states
-  are represented when the product exposes them.
+- Partial, skipped, unchanged, cancelled, interrupted, rejected, timed-out,
+  denied, and blocked operation states are represented when exposed; not-ready
+  and setup-needed readiness conditions use `readiness_status` when exposed.
 - Existing scripts, docs, schemas, examples, and snapshots are not silently
   broken.
 
@@ -187,14 +196,39 @@ Verify each advertised key. Hidden, stale, or aspirational hints are bugs.
 For Agent Chat Terminal UI, check:
 
 - Role labels survive no-color, copy/paste, plain logs, and replay.
+- The default visual posture is message-first and panel-by-exception: ordinary
+  prose is not boxed by default, and panels have a reason such as approval,
+  danger, interaction, code, diff, log preview, untrusted output, or expanded
+  inspection.
+- A realistic combined transcript covers normal prose, quiet thinking, tool
+  lifecycle, failure/recovery, long output, approval, artifact/evidence, and
+  composer or queued-input state when the product supports them.
+- Visual review uses rendered output from the target terminal renderer, not
+  only documentation examples or mocks. Inspect the first viewport, normal and
+  narrow widths, no-color/plain fallback, and at least one failure, long-output,
+  approval, and queued-input state when supported.
 - Draft UI is not persisted transcript history.
 - Model text cannot create trusted system state.
 - Tool output, logs, web content, external files, and model quotes cannot
   impersonate approval, alert, prompt, or focused control.
 - Tool call/result IDs correlate across transcript, logs, and events.
+- Tool state comes from structured events or fields, not from parsing human
+  copy.
 - Tool output is bounded with preview/full/artifact path.
+- Long output states what was omitted and how to inspect the full result.
 - Every running state reaches completed, failed, partial, skipped, cancelled,
-  timed out, or blocked.
+  interrupted, rejected, timed out, blocked, not ready, or setup needed as
+  appropriate.
+- Tool failure, approval denial, rejection, cancellation, interruption,
+  timeout, blocked, not-ready, and backgrounded states remain distinct in text
+  and machine data.
+- Non-zero exit codes include command-specific meaning when known, and are not
+  blindly treated as failure.
+- Concurrent, nested, or skill-driven tools preserve parent/child ownership and
+  do not hide failed or attention-needed rows inside collapsed noise.
+- Skill `setup_needed`, `unsupported`, `disabled`, `missing`, `read_failed`, and
+  `security_warning` states are visible and actionable when they affect the
+  current flow.
 - Approvals show action, target, scope, effect, default, result, and safe
   timeout.
 - `Ctrl+C`, `Esc`, denial, timeout, and disconnect do not approve.
@@ -336,7 +370,7 @@ pipe output has no ANSI
 stderr/stdout split
 width=40 snapshot
 CJK/wide-character alignment
-success / no-op / empty / partial / failure / timeout / cancel
+success / no-op / empty / partial / failure / timeout / cancel / interrupt / reject / not-ready / setup-needed
 destructive dry-run and confirmation text
 exit-code agreement
 ```
@@ -361,12 +395,22 @@ Agent Chat Terminal UI:
 
 ```text
 role labels in TTY and plain log
+message-first visual snapshot with routine prose, thinking, compact tool row, and final answer
+panel-by-exception snapshot with approval, error detail, code/diff/log preview, or untrusted output
+realistic combined transcript instead of isolated component previews
+target-rendered snapshot, not Markdown mock only
 draft does not leak into transcript
 tool start/result correlation
+structured tool events drive visual state
 bounded tool output and artifact path
+long output preview/full recovery path
+failed/skipped/rejected/cancelled/interrupted/timed-out/blocked/not-ready/setup-needed distinction
+non-zero exit-code semantic notes
 approval approve/deny/timeout/cancel
+skill setup_needed/unsupported/disabled/missing/read_failed/security_warning
 untrusted output spoof attempt
 interrupt and resume
+concurrent/nested tool ownership
 background task terminal state
 compaction preserves unresolved state
 event replay reconstructs chronology
@@ -382,6 +426,7 @@ NDJSON line parser
 NDJSON final event
 stderr progress does not pollute stdout
 schema/enums/units/timestamps/IDs
+readiness_status separate from operation status
 redaction in structured fields
 compatibility or golden tests
 ```
@@ -412,6 +457,12 @@ Do not ship if:
 - Tables or aligned content break on CJK/wide text with no fallback.
 - Spinner, progress, tool call, approval, background task, or agent turn does
   not leave a terminal state.
+- Tool, skill, approval, skipped work, cancellation, interruption, timeout,
+  rejection, blocked, not-ready, setup-needed, and runtime failure are collapsed
+  into one ambiguous error state.
+- Long tool output is silently truncated or has no full-result recovery path.
+- Failed or attention-needed concurrent tools can disappear inside a collapsed
+  group with no alert or replay evidence.
 - Tool output or model text can spoof approval, system state, prompt, or active
   control.
 - Secrets leak into output, logs, transcripts, artifacts, screenshots, fixtures,

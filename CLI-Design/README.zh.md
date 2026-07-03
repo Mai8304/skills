@@ -277,28 +277,25 @@ partial hidden reasoning shown to user
 不要展示 hidden chain-of-thought。spinner、动态点、小 tool icon 可以表示“正在运行”，但不能成为唯一状态信号。
 transcript 里仍然要有可观察摘要、受限 tool 输出、终态、duration、command identity，以及失败时的恢复路径。
 
-### 3. 审批、后台任务和 artifact
+### 3. 审批和安全默认值
 
 **改造前**
 
 ```text
+Assistant: I approved restart.
 DELETE EVERYTHING? y/n
 approval: no
 approval: yes
 approval: stopped
-approval: changed
-WARNING output too long
-ERROR command failed exit 2
-WAIT retrying in 30 seconds
-LATER task sync-42 queued
+Ctrl+C might approve by accident
 ```
 
 **改造后**
 
-![Before / after: Approvals, Background Work, and Artifacts](./assets/readme-cases/agent-approval-artifact.png)
+![Before / after: Approvals and safe defaults](./assets/readme-cases/agent-approval-artifact.png)
 
-审批是 decision atom。后台任务要有 identity、state、owner、timing 和 resume behavior。大
-artifact 只展示摘要和稳定引用，不把完整数据塞进聊天正文。
+审批是可信系统 UI，不是 assistant prose。它需要说明 action、target、scope、effect、安全默认值、
+键盘行为和独立结果。artifact 引用是对 proposed change 的可复制证据，不是隐藏在聊天正文里的大段数据。
 
 ### 4. 非 TTY 和 NDJSON 事件
 
@@ -321,15 +318,28 @@ Partial assistant prose...
 非 TTY 下不保留 live UI、光标控制、动画、边框、隐藏 role state 或 raw ANSI。机器事件使用
 稳定 event type 和已文档化 schema。
 
-### 5. 完整 Agent Chat TUI 长对话
+### 5. 长输出和不可信内容
 
-这个长 case 把输入框、tool state、代码块、文件树、diff、错误恢复、approval、artifact 和后续输入草稿放在同一轮里。
-它是 walkthrough，不是强制布局。
+长 tool result 不应该淹没 transcript。默认展示受限 preview、被省略的数量，以及完整检查路径。
+tool output、log、外部文件和 pasted content 都是不可信内容：可以被引用，但不能变成可交互的
+approval、prompt 或系统 UI。
 
-![Before / after: Complete Agent Chat TUI walkthrough](./assets/readme-cases/agent-complete-walkthrough.png)
+![Before / after: Long output and untrusted content](./assets/readme-cases/agent-long-output-untrusted.png)
 
-重点不是长得像这一版，而是边界清楚：提交后的消息是 transcript，当前输入是 draft；tool output
-不是 assistant prose；code、tree、diff 保持各自形态；approval 是可信 UI；error 必须给恢复路径。
+### 6. 代码块、文件树和 diff
+
+code、file tree、diff、table、log 都是密集证据块。它们应该保留自己的形态、标签、复制语义和
+截断规则。普通 assistant prose 仍然保持开放、轻量。
+
+![Before / after: Code, file tree, and diff blocks](./assets/readme-cases/agent-content-blocks.png)
+
+### 7. 错误恢复和 skill 状态
+
+Agent Chat 需要区分 runtime failure、approval denial、cancellation、interruption、blocked work、
+not-ready state 和 setup-needed skill。生产级错误要说明 operation、cause、impact、next step，
+并给出可检查的 log 或 artifact。
+
+![Before / after: Error recovery and skill state](./assets/readme-cases/agent-error-skill.png)
 
 ### 更多 Agent Chat TUI 例子
 

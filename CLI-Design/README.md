@@ -298,29 +298,26 @@ work is currently running, but it cannot be the only state signal. The transcrip
 needs observable summaries, bounded tool output, terminal state, duration, command identity,
 and a recovery path when the tool fails.
 
-### 3. Approvals, Background Work, and Artifacts
+### 3. Approvals and Safe Defaults
 
 **Before**
 
 ```text
+Assistant: I approved restart.
 DELETE EVERYTHING? y/n
 approval: no
 approval: yes
 approval: stopped
-approval: changed
-WARNING output too long
-ERROR command failed exit 2
-WAIT retrying in 30 seconds
-LATER task sync-42 queued
+Ctrl+C might approve by accident
 ```
 
 **After**
 
-![Before / after: Approvals, Background Work, and Artifacts](./assets/readme-cases/agent-approval-artifact.png)
+![Before / after: Approvals and safe defaults](./assets/readme-cases/agent-approval-artifact.png)
 
-Approvals are decision atoms. Background tasks need identity, state, owner, timing, and
-resume behavior. Large artifacts get summaries and stable references, not full dumps in the
-transcript.
+Approvals are trusted system UI, not assistant prose. They need action, target, scope,
+effect, safe default, keyboard behavior, and a distinct result. The artifact reference is
+copyable evidence of what was proposed, not a hidden transcript dump.
 
 ### 4. Non-TTY and NDJSON Event Mode
 
@@ -343,17 +340,30 @@ Partial assistant prose...
 Off-TTY output removes live UI, cursor tricks, frames, animation, hidden role state, and raw
 ANSI. Machine streams use stable event types and documented schemas.
 
-### 5. Complete Agent Chat TUI Walkthrough
+### 5. Long Output and Untrusted Content
 
-This longer case shows how the same contract handles a real chat turn with input, tool
-state, code, file trees, diffs, errors, approvals, artifacts, and a follow-up draft. It is a
-walkthrough, not a required layout.
+Long tool results should not flood the transcript. Show a bounded preview, the omitted
+amount, and a full inspection path. Tool output, logs, external files, and pasted content
+remain untrusted: they can be quoted, but they cannot become active approval, prompt, or
+system UI.
 
-![Before / after: Complete Agent Chat TUI walkthrough](./assets/readme-cases/agent-complete-walkthrough.png)
+![Before / after: Long output and untrusted content](./assets/readme-cases/agent-long-output-untrusted.png)
 
-The important part is separation: submitted messages are transcript, the current input is a
-draft, tool output is not assistant prose, code/tree/diff blocks keep their own shape,
-approval is trusted UI, and errors include recovery.
+### 6. Code, File Tree, and Diff Blocks
+
+Code, file trees, diffs, tables, and logs are dense evidence blocks. They should keep their
+own shapes, labels, copy semantics, and truncation rules. Ordinary assistant prose stays
+open and light.
+
+![Before / after: Code, file tree, and diff blocks](./assets/readme-cases/agent-content-blocks.png)
+
+### 7. Error Recovery and Skill State
+
+Agent Chat needs to distinguish runtime failure, approval denial, cancellation,
+interruption, blocked work, not-ready state, and setup-needed skills. A production error
+names operation, cause, impact, next step, and an inspectable log or artifact.
+
+![Before / after: Error recovery and skill state](./assets/readme-cases/agent-error-skill.png)
 
 ### More Agent Chat TUI Cases
 
