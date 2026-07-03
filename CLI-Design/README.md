@@ -1,200 +1,330 @@
 # CLI-Design
 
-**English** · [中文](./README.zh.md) · Version `2.0.0`
+> A production-grade agent skill for designing terminal surfaces that are accurate first,
+> human-usable second, script/agent-usable third, and visually calm last.
 
-Design, build, review, and improve production-grade CLI and terminal TUI
-surfaces. This README is an orientation document; executable skill instructions
-live in [SKILL.md](./SKILL.md).
+**English** · [中文](./README.zh.md) · Version `2.0.1`
 
-## Purpose
+This skill is for terminal surfaces: what a CLI prints, how a TUI behaves, how color and
+symbols carry state, how progress and errors recover, how output degrades in pipes and CI,
+and how an agent-chat terminal UI renders turns, tools, approvals, choices, artifacts,
+background work, and machine events.
 
-CLI/TUI output is a terminal contract, not just visual polish. It must tell a
-human, script, or agent what happened, what matters, what to do next, and what
-data contract machines can rely on.
+It does not design command names, flags, business logic, or low-level terminal input loops.
 
-The skill covers terminal surfaces only:
+## Install
 
-- Batch CLI output
-- Interactive TUI components
-- Agent Chat Terminal UI
-- Machine-readable output
-- Visual language for terminal surfaces
-- Production pre-ship checks
+```bash
+npx skills add Mai8304/skills -s CLI-Design -g -y
+```
 
-It does not design command/flag APIs or low-level terminal input loops.
+Manual install:
 
-## Default Stance
+```bash
+git clone https://github.com/Mai8304/skills
+cp -r skills/CLI-Design ~/.codex/skills/cli-design
+```
 
-Use this priority order:
+Then ask your agent to use `cli-design` when designing, building, reviewing, or improving
+CLI and terminal TUI output.
 
-1. **Accurate**: render true state, exact counts, real causes, terminal states,
-   and honest uncertainty.
-2. **Human-usable**: make the result, blocker, next action, and recovery path
-   easy to scan.
-3. **Agent/script-usable**: keep stdout/stderr, schemas, status words, events,
-   and exit codes stable.
-4. **Visually calm**: use layout, spacing, symbols, and color to clarify
-   meaning, not decorate.
+The GitHub project directory is `CLI-Design`. The installed Codex skill name is
+`cli-design`, because skill names must be lowercase hyphen-case.
 
-This is not a universal CLI template. Preserve a product's existing terminal
-style unless it violates a hard contract.
+## Default stance
 
-## When To Use
+The baseline is strict:
 
-Use this skill for:
+- **terminal surface as protocol**: output is a contract between human, script, and agent
+- **semantic over decorative**: color, symbols, spacing, and labels must carry meaning
+- **contract before chrome**: decide stdout/stderr, schema, exit code, fallback, and risk first
+- **low decoration**: no rainbow output, no default emoji, no frames around ordinary data
+- **scriptable first**: `stdout` is data; `stderr` is conversation; `--json` is pure data
+- **TTY-aware**: animation, cursor tricks, links, and live redraw are interactive-only
+- **theme-safe**: respect light/dark terminals, `NO_COLOR`, CI, `TERM=dumb`, narrow width,
+  CJK/wide characters, and ASCII fallback
+- **safe by default**: destructive actions preview impact and default to No
 
-- command results, help/usage, argument errors, diagnostics, and recovery copy
-- status, progress, spinners, logs, summaries, and dry-runs
-- tables, lists, trees, code blocks, diffs, pagers, and artifacts
-- prompts, pickers, multi-select, forms, approvals, and confirmations
-- agent-chat terminal transcripts, tools, approvals, artifacts, background work,
-  interrupts, replay, and event fallback
-- `--json`, NDJSON, pipe/plain output, stdout/stderr, exit codes, schema
-  versioning, and stable enums
-- `NO_COLOR`, `FORCE_COLOR`, `TERM=dumb`, CI, non-TTY, pipe, narrow width,
-  Unicode fallback, and CJK/wide-character alignment
+There is one explicit exception: **expressive TTY notices**. Low-frequency interactive
+notices, such as update notices, may use a light frame, a small icon, and underlined/raw
+URLs. They must degrade to plain lines outside an interactive TTY.
 
-Do not use it as a fixed output template. Use it to choose the correct surface
-family, contract, fallback, and validation gate.
+## Core decision model
 
-## Surface Router
+Before choosing color, symbols, layout chrome, or copy, use this order:
 
-Open the smallest useful reference set:
+```text
+reader task -> surface family -> interaction contract -> channel contract -> visual semantics
+```
 
-| Surface or decision | Read |
+- **Reader task**: discover, inspect, act, recover, automate, or converse.
+- **Surface family**: Batch CLI, Interactive TUI, Agent Chat Terminal UI, or
+  Machine-readable output.
+- **Interaction contract**: passive output, confirmation, single select, multi select,
+  approval, interrupt, replay, or live agent session.
+- **Channel contract**: TTY, pipe, `--json`, NDJSON, CI, `NO_COLOR`, `TERM=dumb`, width,
+  Unicode support, stdout/stderr, and exit code.
+- **Visual semantics**: state, focus, selection, disabled reason, danger, next action,
+  copy target, secondary information, and body text.
+
+The practical rule is: information structure first, layout second, semantic color third.
+Technical tokens such as commands, flags, paths, URLs, environment variables, and config
+keys get accent only when they are the identified object, selected item, copy target,
+current operation, or next action.
+
+## Four lenses
+
+Every terminal design decision is judged in this order:
+
+1. **Accurate**: never lie about state, progress, counts, risk, cause, or uncertainty.
+2. **Human-usable**: show the result, blocker, next action, and recovery path at a glance.
+3. **Agent/script-usable**: keep logs, schemas, events, status words, and exit codes stable.
+4. **Beautiful**: use calm hierarchy, semantic color, stable symbols, and whitespace.
+
+When these conflict, the earlier lens wins. A pretty layout never justifies a wrong state
+or a polluted machine contract.
+
+## What the skill covers
+
+| Area | Coverage |
 |---|---|
-| Batch command output, help/usage, errors, progress, logs, tables, dry-runs, destructive previews, pipe/CI behavior | [references/batch-cli-output.md](./references/batch-cli-output.md) |
-| Interactive terminal components, focus/selection/input modes, prompts, pickers, tables, pagers, code/log/diff views, approvals, completion menus | [references/interactive-tui.md](./references/interactive-tui.md) |
-| Agent-chat terminal transcripts, roles, streaming/final states, tools, approvals, background tasks, artifacts, interrupts, replay/log fallback | [references/agent-chat-terminal-ui.md](./references/agent-chat-terminal-ui.md) |
-| `--json`, NDJSON, pipe/plain output, stdout/stderr/exit-code contracts, schemas, versioning, structured errors | [references/machine-readable-output.md](./references/machine-readable-output.md) |
-| Visual semantics, theme tokens, status colors/symbols, focus/selection/input/disabled/danger, density, borders, table/code/diff/log visuals | [references/visual-language.md](./references/visual-language.md) |
-| Final production checks, stop-ship conditions, terminal robustness, security/trust/redaction, snapshot/golden test matrix | [references/pre-ship-gate.md](./references/pre-ship-gate.md) |
+| Surface routing | Batch CLI, Interactive TUI, Agent Chat Terminal UI, Machine-readable output |
+| Batch CLI output | command results, help/usage, argument errors, diagnostics, progress, logs, summaries, tables, dry-runs, destructive previews, pipe/CI behavior |
+| Interactive TUI | pickers, multi-select, forms, table/list browsers, pagers, code/log blocks, diffs, approvals, completion menus, live progress |
+| Agent Chat Terminal UI | transcript roles, input draft, streaming/final states, tools, approvals, choices, artifacts, interrupts, queues, background work, replay, event fallback |
+| Machine-readable output | `--json`, NDJSON, pipe/plain output, stdout/stderr, exit codes, schemas, stable enums, structured errors, versioning |
+| Visual language | semantic roles, theme tokens, status colors/symbols, focus/selection/input/disabled/danger, density, borders, table/code/diff/log visuals |
+| Runtime robustness | `NO_COLOR`, `FORCE_COLOR`, `TERM=dumb`, CI, non-TTY, narrow width, CJK/wide-character alignment, ASCII fallback, terminal cleanup |
+| Safety and trust | destructive confirmation, approval state, redaction, secret handling, audit-friendly tool output, recovery copy |
 
-## Core Contracts
+## Before / after: ordinary CLI
 
-Hard invariants:
+The README shows a few representative cases. The PNG gallery after these examples carries
+the broader visual reference. Examples are recipes, not templates: preserve the information
+contract and adapt the layout to the CLI in front of you.
 
-- Detect the channel before decorating.
-- stdout is data; stderr is conversation.
-- Machine modes are pure data, even under `FORCE_COLOR` or `--color=always`.
-- Interactive prompts have non-TTY paths.
-- Long operations reach truthful terminal states.
-- Errors include cause, scope, impact, and recovery when knowable.
-- Destructive actions preview impact and default safe.
-- Meaning survives without color, glyphs, animation, or live redraw.
-- Alignment uses display width, not byte or rune count.
-- Secrets stay redacted.
+### 1. Errors That Guide
 
-## Representative Cases
-
-Examples are recipes, not templates. Style markers like `[green]` or
-`[cyan+inverse]` describe visual intent; they are not literal output unless the
-renderer uses that notation.
-
-### Batch CLI Output
-
-Weak:
+**Before**
 
 ```text
-Success!
-Everything completed beautifully.
+Error: invalid
+Error: failed
 ```
 
-Production-grade:
+**After**
+
+![After: Errors That Guide](./assets/readme-after/ordinary-errors-after.png?v=readable-20260623)
+
+An error is not just red text. It must name the operation, cause, affected scope, impact,
+and a concrete recovery step when knowable.
+
+### 2. Semantic Color, Progress, and Result State
+
+**Before**
 
 ```text
-[green]OK[/green] Deploy completed
-service: api
-version: v1.8.2
-pods: 3 ready
-duration: 42s
+Important: run shipctl auth refresh now
+See docs: https://example.com/docs/auth
+
+Uploading release.tgz 3.8/5.1 MB 74% 1.2 MB/s eta 1s
+Uploaded release.tgz 5.1 MB in 4.2s
+Deploy finished. Some checks failed. Lots of log output...
 ```
 
-Failure:
+**After**
+
+![After: Semantic Color, Progress, and Result State](./assets/readme-after/ordinary-progress-after.png?v=readable-20260623)
+
+Use color for semantic state: green for success, yellow for warning or degraded state, red
+for current failure, cyan for focus/current/next-action roles. Progress must be honest and
+must resolve to a terminal state.
+
+### 3. Data Shapes and Diagnostics
+
+**Before**
 
 ```text
-[red]ERR[/red] Deploy failed
-target: api
-reason: registry token expired
-impact: rollout did not start
-next:
-  shipctl auth refresh
++--------+--------------------+--------+
+| NUMBER | TITLE              | STATE  |
++--------+--------------------+--------+
+| 128    | Fix color fallback | open   |
++--------+--------------------+--------+
+
+ID TITLE AUTHOR BRANCH CHECKS FILES
+128 Fix color fallback open zw fix-color->main pass=4 files=6 +128 -34
+
+error E0382 borrow of moved value cfg
+src/main.go line 14 column 9
+line 12 load(cfg) moved cfg
+line 14 print(cfg) used after move
 ```
 
-### Interactive TUI
+**After**
+
+![After: Data Shapes and Diagnostics](./assets/readme-after/ordinary-data-after.png?v=readable-20260623)
+
+Use tables for homogeneous rows, key-value blocks for one object, and structured diagnostics
+for source, cause, evidence, and next action. Alignment must use display width, not byte or
+rune count.
+
+### 4. Runtime Contracts and Redaction
+
+**Before**
 
 ```text
-? Services to restart
-  [dim]Space toggle · a all · Enter submit · Esc cancel[/dim]
-
-[cyan+inverse]▸ [ ] api[/cyan+inverse]        [dim]2 replicas[/dim]
-[green]  [✓] worker[/green]     [dim]1 replica[/dim]
-[dim]  [ ] legacy[/dim]     [dim]unsupported runtime[/dim]
-
-[dim]1 selected[/dim]
-```
-
-This keeps focus, selection, disabled reason, key hints, and count separate.
-
-### Agent Chat Terminal UI
-
-```text
-[cyan]▌ You[/cyan]
-  Deploy api to staging and show the final status.
-
-▌ Assistant [dim]streaming[/dim]
-  I'll check the current rollout first.
-
-[tool call #17] shipctl status api
-[dim]running · 2.1s[/dim]
-
-[tool result #17] [green]completed[/green] [dim]2.4s[/dim]
-api ready · version v1.8.2
-
-▌ Assistant [dim]final[/dim]
-  api is already running v1.8.2 in staging.
-[dim]evidence: tool #17 shipctl status api[/dim]
-```
-
-Agent Chat Terminal UI is a composed workspace: transcript, draft, tool state,
-approval, artifact, background work, and event fallback. It is not an ordinary
-command-output template.
-
-### Machine-Readable Output
-
-```json
+Checking...
 {
   "schema_version": "1",
   "ok": false,
-  "status": "failed",
-  "operation": "deploy",
-  "target": {
-    "service": "api",
-    "environment": "staging"
-  },
-  "error": {
-    "code": "registry_auth_expired",
-    "message": "Registry token expired",
-    "retryable": true,
-    "next_steps": [
-      {
-        "kind": "command",
-        "command": "shipctl auth refresh",
-        "reason": "refresh registry credentials"
-      }
-    ]
-  }
+  "duration_ms": 412,
+  "checks": [
+    {
+      "name": "registry_auth",
+      "status": "\x1b[31mfail\x1b[0m",
+      "message": "not configured",
+      "next_steps": [
+        { "command": "shipctl auth refresh", "reason": "refresh credentials" }
+      ]
+    }
+  ]
 }
+Run shipctl auth refresh to fix this!
+
+NAME      STATUS
+配置文件      missing
+gateway   pass
+
+connected with token sk-live-123456
 ```
 
-No ANSI, prose wrappers, spinner frames, Markdown fences, or decorative blank
-lines belong in machine output.
+**After**
 
-## Skill Structure
+![After: Runtime Contracts and Redaction](./assets/readme-after/ordinary-runtime-after.png?v=readable-20260623)
+
+Machine mode is a contract. It must not mix ANSI, spinner frames, prose wrappers, or
+decorative blank lines into stdout. Secrets must be redacted in human output, logs,
+transcripts, fixtures, and machine events.
+
+### More Ordinary CLI Cases
+
+The full visual reference covers ordinary CLI atoms such as help, bad arguments, errors,
+role-bearing technical-object accent, progress, tables, object details, file trees, diffs,
+content blocks, nested tasks, diagnostics, summaries, dry-run previews, empty states, logs,
+expressive notices, prompts, machine mode, CJK width, pager behavior, deprecations,
+interruption, theme adaptation, and redaction.
+
+![Ordinary CLI Before / After](./assets/ordinary-cli-before-after.png?v=readable-20260623)
+
+## Before / after: Agent Chat TUI
+
+Agent Chat Terminal UI is not ordinary command output. It has live input, transcript roles,
+assistant streaming and final states, tools, choices, approvals, background work, artifacts,
+interrupts, replay, and machine-event fallbacks. The skill defines reusable atoms and
+contracts, not one product-specific full-screen template.
+
+### 1. Transcript roles and input composer
+
+**Before**
+
+```text
+User: deploy api to staging
+Bot: I will do it.
+You: explain this er█
+You: explain this error and suggest the smallest fix
+```
+
+**After**
+
+![After: Transcript roles and input composer](./assets/readme-after/agent-transcript-after.png?v=readable-20260623)
+
+The live draft is not transcript history. Cursor movement, deletion, suggestions, and IME
+composition are input UI until the user submits.
+
+### 2. Thinking and Tool Use
+
+**Before**
+
+```text
+thinking thinking thinking
+Running shell: shipctl status api
+exit 1 after 2.3s
+raw output mixed into assistant prose
+partial hidden reasoning shown to user
+```
+
+**After**
+
+![After: Thinking and Tool Use](./assets/readme-after/agent-tool-after.png?v=readable-20260623)
+
+Never expose hidden chain-of-thought. Show concise observable summaries and bounded tool
+results with terminal state, duration, command identity, and evidence links when useful.
+
+### 3. Approvals, Background Work, and Artifacts
+
+**Before**
+
+```text
+DELETE EVERYTHING? y/n
+approval: no
+approval: yes
+approval: stopped
+approval: changed
+WARNING output too long
+ERROR command failed exit 2
+WAIT retrying in 30 seconds
+LATER task sync-42 queued
+```
+
+**After**
+
+![After: Approvals, Background Work, and Artifacts](./assets/readme-after/agent-approval-after.png?v=readable-20260623)
+
+Approvals are decision atoms. Background tasks need identity, state, owner, timing, and
+resume behavior. Large artifacts get summaries and stable references, not full dumps in the
+transcript.
+
+### 4. Non-TTY and NDJSON Event Mode
+
+**Before**
+
+```text
+\x1b[?25lAssistant thinking\r
+\x1b[36mTool shell running shipctl status api\x1b[0m
+Tool shell fail exit=1 duration_ms=2300
+Thinking...
+{"tool":"shell"}
+Done!
+Partial assistant prose...
+```
+
+**After**
+
+![After: Non-TTY and NDJSON Event Mode](./assets/readme-after/agent-events-after.png?v=readable-20260623)
+
+Off-TTY output removes live UI, cursor tricks, frames, animation, hidden role state, and raw
+ANSI. Machine streams use stable event types and documented schemas.
+
+### More Agent Chat TUI Cases
+
+The full visual reference covers Agent Chat atoms such as transcript roles, input draft,
+multiline paste, IME/CJK composition, assistant streaming, tool use, tool results, choices,
+approvals, alerts, timers, background tasks, theme adaptation, suggestions, file mentions,
+cancellation, approval outcomes, artifacts, plain non-TTY fallback, and NDJSON event mode.
+
+![Agent Chat TUI Before / After](./assets/agent-chat-tui-before-after.png?v=readable-20260623)
+
+## Skill contents
 
 ```text
 CLI-Design/
+├── README.md
+├── README.zh.md
 ├── SKILL.md
+├── assets/
+│   ├── ordinary-cli-before-after.png
+│   ├── agent-chat-tui-before-after.png
+│   └── readme-after/
 └── references/
     ├── batch-cli-output.md
     ├── interactive-tui.md
@@ -204,46 +334,39 @@ CLI-Design/
     └── pre-ship-gate.md
 ```
 
-`SKILL.md` is the router and hard-contract layer. The reference files carry the
-surface-specific detail.
+`SKILL.md` is the short router and hard-contract layer. Reference files are loaded only
+when relevant. README assets are visual orientation for humans; they are not mandatory
+templates for agents.
 
-## References
+## Reference map
 
-- `batch-cli-output.md`: command results, help/usage, errors, progress, logs,
-  tables, dry-runs, destructive previews, pipe/CI behavior.
-- `interactive-tui.md`: keyboard-owned terminal components, focus, selection,
-  input modes, key hints, pickers, forms, pagers, diffs, approvals, completion,
-  live progress.
-- `agent-chat-terminal-ui.md`: terminal chat transcripts, user draft, assistant
-  states, tools, approvals, artifacts, background work, interrupts, replay,
-  event fallback.
-- `machine-readable-output.md`: JSON, NDJSON, pipe/plain output, stdout/stderr,
-  exit codes, schemas, stable enums, structured errors, versioning.
+- `batch-cli-output.md`: command results, help/usage, errors, progress, logs, tables,
+  dry-runs, destructive previews, empty states, pipe/CI behavior.
+- `interactive-tui.md`: prompts, pickers, multi-select, forms, table/list browsers, pagers,
+  code/log/diff views, approvals, completion menus, key semantics, fallback behavior.
+- `agent-chat-terminal-ui.md`: transcript roles, input draft, assistant states, tools,
+  approvals, artifacts, background work, interrupts, replay, event/log fallback.
+- `machine-readable-output.md`: JSON, NDJSON, pipe/plain output, stdout/stderr, exit codes,
+  schemas, stable enums, structured errors, compatibility, versioning.
 - `visual-language.md`: semantic roles, theme tokens, status colors/symbols,
-  focus/selection/input/disabled/danger, tables, code, diff, logs, accessibility.
-- `pre-ship-gate.md`: production checks, stop-ship conditions, robustness,
-  redaction, trust boundaries, snapshot/golden matrix.
+  focus/selection/input/disabled/danger, density, borders, table/code/diff/log visuals.
+- `pre-ship-gate.md`: production checks, stop-ship conditions, robustness, security,
+  redaction, trust boundaries, snapshot/golden test matrix.
 
-## Validation
+## Pre-ship checklist
 
-Run the skill validator after edits:
-
-```bash
-python3 /Users/zhuangwei/.codex/skills/.system/skill-creator/scripts/quick_validate.py ./CLI-Design
-```
-
-Recommended forward-test cases:
-
-- Review a CLI error and JSON output for channel/status/exit-code agreement.
-- Design a multi-select TUI with dangerous confirmation and non-TTY fallback.
-- Design an agent-chat terminal surface with tool, approval, artifact, and
-  replay states.
-
-## Notes For Maintainers
-
-- Keep `SKILL.md` short. Add detailed guidance to one of the six references.
-- Do not add a seventh reference unless a new surface family appears.
-- Do not reintroduce README image galleries or fixed visual templates.
-- Keep examples neutral; avoid product-specific cases.
-- Treat examples as recipes for information, state, fallback, and contracts, not
-  as mandatory layouts.
+- Piped output has no raw ANSI, spinner frames, cursor codes, or decorative blank edges.
+- `--json` and NDJSON modes are pure stdout data with stable field names and enums.
+- Status words come from one vocabulary and map cleanly to UI roles.
+- Every long operation reaches a truthful terminal state.
+- Every error names cause, scope, impact, and recovery when knowable.
+- Destructive actions preview scope, default to No, and have non-interactive flags.
+- Technical tokens use accent only when they are the identified object, selected item,
+  copy target, current operation, or next action.
+- Color, glyphs, animation, and live redraw are never the only signal.
+- `NO_COLOR=1`, `FORCE_COLOR=1`, `TERM=dumb`, CI, non-TTY, narrow width, and ASCII fallback
+  preserve meaning.
+- Machine modes remain plain data even when color is forced.
+- CJK and wide characters align by display width.
+- Secrets are redacted in logs, transcripts, debug output, fixtures, and machine events.
+- Agent Chat live UI has plain log and NDJSON/event fallbacks.

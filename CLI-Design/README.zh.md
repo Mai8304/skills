@@ -1,192 +1,317 @@
 # CLI-Design
 
-[English](./README.md) · **中文** · 版本 `2.0.0`
+> 这个 skill 用来设计生产级 terminal surface：先保证准确，再保证人能快速读懂，再保证脚本和 AI agent 能解析，最后才是视觉上的克制和好看。
 
-用于设计、构建、审查和优化生产级 CLI 与 terminal TUI surface。这个 README
-只是导览文档；真正给 agent 使用的执行说明在 [SKILL.md](./SKILL.md)。
+[English](./README.md) · **中文** · 版本 `2.0.1`
 
-## Purpose
+它关注 CLI 和 terminal TUI 在终端里“怎么说话、怎么交互”：颜色、符号、状态、进度、
+错误、布局、表格、树、diff、JSON、管道、CI、`NO_COLOR`，以及 Agent Chat Terminal UI
+里的对话、输入草稿、工具调用、审批、选择项、后台任务、artifact 和机器事件。
 
-CLI/TUI 输出是 terminal contract，不只是视觉美化。它必须告诉人、脚本或
-agent：发生了什么、什么重要、下一步怎么做，以及机器能依赖什么数据契约。
+它不负责设计命令名、flag、业务逻辑或底层 terminal input loop。
 
-这个 skill 只覆盖 terminal surface：
+## 快速安装
 
-- Batch CLI output
-- Interactive TUI components
-- Agent Chat Terminal UI
-- Machine-readable output
-- Terminal surface 的 visual language
-- 生产级 pre-ship checks
+```bash
+npx skills add Mai8304/skills -s CLI-Design -g -y
+```
 
-它不负责设计 command/flag API，也不负责底层 terminal input loop。
+手动安装：
 
-## Default Stance
+```bash
+git clone https://github.com/Mai8304/skills
+cp -r skills/CLI-Design ~/.codex/skills/cli-design
+```
 
-使用这个优先级：
+安装后，让 agent 在设计、实现、review 或改进 CLI / terminal TUI 输出时使用
+`cli-design`。
 
-1. **Accurate**：输出真实状态、准确数量、真实原因、终态和不确定性。
-2. **Human-usable**：让结果、阻塞点、下一步和恢复路径容易扫描。
-3. **Agent/script-usable**：让 stdout/stderr、schema、状态词、event 和 exit code
-   稳定。
-4. **Visually calm**：用 layout、spacing、symbol、color 澄清含义，不做装饰。
+GitHub 项目目录叫 `CLI-Design`。安装到 Codex 后的 skill 名是 `cli-design`，因为
+skill name 必须是小写 hyphen-case。
 
-这不是统一 CLI 模板。保留产品已有 terminal 风格，除非它违反硬契约。
+## 默认基线
 
-## When To Use
+这个 skill 的默认基线不是“更花哨”，而是：
 
-这些场景使用这个 skill：
+- **terminal surface 是协议**：输出是人、脚本、agent 之间的契约
+- **严格语义**：颜色、符号、留白、标签、状态词都必须有含义
+- **契约先于样式**：先定 stdout/stderr、schema、exit code、fallback 和风险
+- **低装饰**：普通输出不加彩虹，不默认 emoji，不给普通数据套框
+- **可脚本化优先**：`stdout` 放数据，`stderr` 放进度、诊断、提示；`--json` 必须纯净
+- **TTY 感知**：动画、光标技巧、链接、live redraw 只在交互式 TTY 出现
+- **主题与降级安全**：适配亮/暗终端，尊重 `NO_COLOR`、CI、`TERM=dumb`、窄屏、
+  CJK 宽字符和 ASCII fallback
+- **默认安全**：危险操作必须先展示影响范围，并默认 No
 
-- command result、help/usage、argument error、diagnostic、recovery copy
-- status、progress、spinner、log、summary、dry-run
-- table、list、tree、code block、diff、pager、artifact
-- prompt、picker、multi-select、form、approval、confirmation
-- agent-chat terminal transcript、tool、approval、artifact、background work、
-  interrupt、replay、event fallback
-- `--json`、NDJSON、pipe/plain output、stdout/stderr、exit code、schema
-  versioning、stable enum
-- `NO_COLOR`、`FORCE_COLOR`、`TERM=dumb`、CI、non-TTY、pipe、narrow width、
-  Unicode fallback、CJK/wide-character alignment
+唯一明确放宽的是 **expressive TTY notice**：低频、非阻塞、交互式通知可以用轻框、
+小 icon、链接下划线，例如版本更新提示。但一旦进入 pipe、CI、`NO_COLOR` 或
+`TERM=dumb`，必须退回普通文本。
 
-不要把它当固定输出模板。它的用途是选择正确 surface family、contract、
-fallback 和 validation gate。
+## 核心决策模型
 
-## Surface Router
+决定颜色、符号、布局 chrome 或文案之前，先按这个顺序判断：
 
-打开最小必要 reference：
+```text
+reader task -> surface family -> interaction contract -> channel contract -> visual semantics
+```
 
-| Surface or decision | Read |
+- **reader task**：发现、检查、行动、恢复、自动化、对话。
+- **surface family**：Batch CLI、Interactive TUI、Agent Chat Terminal UI、
+  Machine-readable output。
+- **interaction contract**：被动输出、确认、单选、多选、审批、中断、回放、live agent
+  session。
+- **channel contract**：TTY、pipe、`--json`、NDJSON、CI、`NO_COLOR`、`TERM=dumb`、
+  width、Unicode support、stdout/stderr、exit code。
+- **visual semantics**：状态、焦点、选中、disabled reason、危险、下一步、可复制目标、
+  次要信息、正文。
+
+通俗地说：先定信息结构，第二是布局，第三才是语义颜色。命令、flag、路径、URL、
+环境变量、配置 key 只有在它们是被说明的对象、选中项、可复制目标、当前操作或下一步动作时
+才用 accent。
+
+## 四个判断顺序
+
+每个 terminal 设计都按这个顺序判断：
+
+1. **准确**：状态、进度、数量、风险、原因、不确定性不能错。
+2. **人类可用**：用户一眼看见结果、阻塞点、下一步和恢复路径。
+3. **Agent / 脚本可用**：日志、schema、event、状态词和 exit code 能被稳定解析。
+4. **美观**：颜色克制，层次清楚，符号稳定，留白有结构。
+
+如果冲突，前面的优先。漂亮不能掩盖错误状态，也不能污染机器契约。
+
+## 覆盖范围
+
+| 类别 | 覆盖内容 |
 |---|---|
-| Batch command output、help/usage、error、progress、log、table、dry-run、destructive preview、pipe/CI behavior | [references/batch-cli-output.md](./references/batch-cli-output.md) |
-| Interactive terminal component、focus/selection/input mode、prompt、picker、table、pager、code/log/diff view、approval、completion menu | [references/interactive-tui.md](./references/interactive-tui.md) |
-| Agent-chat terminal transcript、role、streaming/final state、tool、approval、background task、artifact、interrupt、replay/log fallback | [references/agent-chat-terminal-ui.md](./references/agent-chat-terminal-ui.md) |
-| `--json`、NDJSON、pipe/plain output、stdout/stderr/exit-code contract、schema、versioning、structured error | [references/machine-readable-output.md](./references/machine-readable-output.md) |
-| Visual semantic、theme token、status color/symbol、focus/selection/input/disabled/danger、density、border、table/code/diff/log visual | [references/visual-language.md](./references/visual-language.md) |
-| Final production check、stop-ship condition、terminal robustness、security/trust/redaction、snapshot/golden test matrix | [references/pre-ship-gate.md](./references/pre-ship-gate.md) |
+| Surface routing | Batch CLI、Interactive TUI、Agent Chat Terminal UI、Machine-readable output |
+| Batch CLI output | command result、help/usage、argument error、diagnostic、progress、log、summary、table、dry-run、destructive preview、pipe/CI behavior |
+| Interactive TUI | picker、multi-select、form、table/list browser、pager、code/log block、diff、approval、completion menu、live progress |
+| Agent Chat Terminal UI | transcript role、input draft、streaming/final state、tool、approval、choice、artifact、interrupt、queue、background work、replay、event fallback |
+| Machine-readable output | `--json`、NDJSON、pipe/plain output、stdout/stderr、exit code、schema、stable enum、structured error、versioning |
+| Visual language | semantic role、theme token、status color/symbol、focus/selection/input/disabled/danger、density、border、table/code/diff/log visual |
+| Runtime robustness | `NO_COLOR`、`FORCE_COLOR`、`TERM=dumb`、CI、non-TTY、窄屏、CJK/wide-character alignment、ASCII fallback、terminal cleanup |
+| Safety and trust | 危险确认、approval state、redaction、secret handling、audit-friendly tool output、recovery copy |
 
-## Core Contracts
+## 普通 CLI：改造前 / 改造后
 
-硬约束：
+README 主体只展示少数典型 case；完整视觉参考放在本节末尾图片中。例子是 recipe，不是模板：
+保留信息契约，根据眼前 CLI 的风格调整布局。
 
-- 先识别 channel，再做视觉增强。
-- stdout 是数据；stderr 是对话。
-- machine mode 必须是纯数据，即使设置了 `FORCE_COLOR` 或 `--color=always`。
-- interactive prompt 必须有 non-TTY path。
-- 长任务必须落到真实终态。
-- error 在可知时必须包含 cause、scope、impact、recovery。
-- 破坏性操作必须 preview impact，并默认安全。
-- 没有 color、glyph、animation、live redraw 时含义仍然成立。
-- 对齐按 display width，不按 byte 或 rune。
-- secret 必须 redacted。
+### 1. 会引导的错误
 
-## Representative Cases
-
-例子是 recipe，不是模板。`[green]`、`[cyan+inverse]` 这类 marker 表示视觉意图；
-除非 renderer 本身使用这种语法，否则不要原样输出。
-
-### Batch CLI Output
-
-弱输出：
+**改造前**
 
 ```text
-Success!
-Everything completed beautifully.
+Error: invalid
+Error: failed
 ```
 
-生产级输出：
+**改造后**
+
+![After: Errors That Guide](./assets/readme-after/ordinary-errors-after.png?v=readable-20260623)
+
+错误不是“红一点”就够了；它必须在可知时说清楚操作、原因、影响范围、影响结果和下一步。
+
+### 2. 语义颜色、进度和结果状态
+
+**改造前**
 
 ```text
-[green]OK[/green] Deploy completed
-service: api
-version: v1.8.2
-pods: 3 ready
-duration: 42s
+Important: run shipctl auth refresh now
+See docs: https://example.com/docs/auth
+
+Uploading release.tgz 3.8/5.1 MB 74% 1.2 MB/s eta 1s
+Uploaded release.tgz 5.1 MB in 4.2s
+Deploy finished. Some checks failed. Lots of log output...
 ```
 
-失败：
+**改造后**
+
+![After: Semantic Color, Progress, and Result State](./assets/readme-after/ordinary-progress-after.png?v=readable-20260623)
+
+颜色服务于语义：绿色给成功，黄色给 warning 或 degraded state，红色给当前失败，青色给
+focus/current/next-action 角色。进度必须诚实，并且必须落到终态。
+
+### 3. 数据形态和诊断
+
+**改造前**
 
 ```text
-[red]ERR[/red] Deploy failed
-target: api
-reason: registry token expired
-impact: rollout did not start
-next:
-  shipctl auth refresh
++--------+--------------------+--------+
+| NUMBER | TITLE              | STATE  |
++--------+--------------------+--------+
+| 128    | Fix color fallback | open   |
++--------+--------------------+--------+
+
+ID TITLE AUTHOR BRANCH CHECKS FILES
+128 Fix color fallback open zw fix-color->main pass=4 files=6 +128 -34
+
+error E0382 borrow of moved value cfg
+src/main.go line 14 column 9
+line 12 load(cfg) moved cfg
+line 14 print(cfg) used after move
 ```
 
-### Interactive TUI
+**改造后**
+
+![After: Data Shapes and Diagnostics](./assets/readme-after/ordinary-data-after.png?v=readable-20260623)
+
+同质数据用表格，单个对象用 key-value，诊断要呈现 source、cause、evidence 和 next action。
+对齐必须按 display width，不按 byte 或 rune。
+
+### 4. 机器契约和敏感信息
+
+**改造前**
 
 ```text
-? Services to restart
-  [dim]Space toggle · a all · Enter submit · Esc cancel[/dim]
-
-[cyan+inverse]▸ [ ] api[/cyan+inverse]        [dim]2 replicas[/dim]
-[green]  [✓] worker[/green]     [dim]1 replica[/dim]
-[dim]  [ ] legacy[/dim]     [dim]unsupported runtime[/dim]
-
-[dim]1 selected[/dim]
-```
-
-这个例子把 focus、selection、disabled reason、key hint 和 count 分开。
-
-### Agent Chat Terminal UI
-
-```text
-[cyan]▌ You[/cyan]
-  Deploy api to staging and show the final status.
-
-▌ Assistant [dim]streaming[/dim]
-  I'll check the current rollout first.
-
-[tool call #17] shipctl status api
-[dim]running · 2.1s[/dim]
-
-[tool result #17] [green]completed[/green] [dim]2.4s[/dim]
-api ready · version v1.8.2
-
-▌ Assistant [dim]final[/dim]
-  api is already running v1.8.2 in staging.
-[dim]evidence: tool #17 shipctl status api[/dim]
-```
-
-Agent Chat Terminal UI 是组合式 workspace：transcript、draft、tool state、
-approval、artifact、background work、event fallback。它不是普通 command-output
-模板。
-
-### Machine-Readable Output
-
-```json
+Checking...
 {
   "schema_version": "1",
   "ok": false,
-  "status": "failed",
-  "operation": "deploy",
-  "target": {
-    "service": "api",
-    "environment": "staging"
-  },
-  "error": {
-    "code": "registry_auth_expired",
-    "message": "Registry token expired",
-    "retryable": true,
-    "next_steps": [
-      {
-        "kind": "command",
-        "command": "shipctl auth refresh",
-        "reason": "refresh registry credentials"
-      }
-    ]
-  }
+  "duration_ms": 412,
+  "checks": [
+    {
+      "name": "registry_auth",
+      "status": "\x1b[31mfail\x1b[0m",
+      "message": "not configured",
+      "next_steps": [
+        { "command": "shipctl auth refresh", "reason": "refresh credentials" }
+      ]
+    }
+  ]
 }
+Run shipctl auth refresh to fix this!
+
+NAME      STATUS
+配置文件      missing
+gateway   pass
+
+connected with token sk-live-123456
 ```
 
-machine output 里不能混入 ANSI、prose wrapper、spinner frame、Markdown fence 或装饰性空行。
+**改造后**
 
-## Skill Structure
+![After: Runtime Contracts and Redaction](./assets/readme-after/ordinary-runtime-after.png?v=readable-20260623)
+
+机器模式是契约，不能混进 ANSI、spinner frame、prose wrapper 或装饰性空行。secret 必须在
+human output、log、transcript、fixture、machine event 中先 redaction。
+
+### 更多普通 CLI 例子
+
+完整视觉参考覆盖普通 CLI 输出原子：help、bad arguments、error、有语义角色的技术对象
+accent、进度、表格、对象详情、文件树、diff、内容块、嵌套任务、诊断、结果汇总、dry-run、
+空状态、日志、expressive notice、prompt、machine mode、CJK 宽度、pager、deprecation、
+中断、主题适配和 redaction。
+
+![Ordinary CLI Before / After](./assets/ordinary-cli-before-after.png?v=readable-20260623)
+
+## Agent Chat TUI：改造前 / 改造后
+
+Agent Chat Terminal UI 和普通 CLI 输出不同。它有 live input、transcript、assistant
+streaming/final state、tool、choice、approval、background work、artifact、interrupt、replay
+和机器事件 fallback。这个 skill 定义的是可组合原子和契约，不是某个具体产品的一整套全屏模板。
+
+### 1. 角色、输入草稿、提交后的 transcript
+
+**改造前**
+
+```text
+User: deploy api to staging
+Bot: I will do it.
+You: explain this er█
+You: explain this error and suggest the smallest fix
+```
+
+**改造后**
+
+![After: Transcript roles and input composer](./assets/readme-after/agent-transcript-after.png?v=readable-20260623)
+
+输入草稿是 live UI，不是历史记录。光标移动、删除、候选项、IME 组合态都不能污染 transcript。
+
+### 2. Thinking 和 Tool Use
+
+**改造前**
+
+```text
+thinking thinking thinking
+Running shell: shipctl status api
+exit 1 after 2.3s
+raw output mixed into assistant prose
+partial hidden reasoning shown to user
+```
+
+**改造后**
+
+![After: Thinking and Tool Use](./assets/readme-after/agent-tool-after.png?v=readable-20260623)
+
+不要展示 hidden chain-of-thought。可以展示可观察摘要和受限 tool 输出，并带上终态、
+duration、command identity 和必要 evidence。
+
+### 3. 审批、后台任务和 artifact
+
+**改造前**
+
+```text
+DELETE EVERYTHING? y/n
+approval: no
+approval: yes
+approval: stopped
+approval: changed
+WARNING output too long
+ERROR command failed exit 2
+WAIT retrying in 30 seconds
+LATER task sync-42 queued
+```
+
+**改造后**
+
+![After: Approvals, Background Work, and Artifacts](./assets/readme-after/agent-approval-after.png?v=readable-20260623)
+
+审批是 decision atom。后台任务要有 identity、state、owner、timing 和 resume behavior。大
+artifact 只展示摘要和稳定引用，不把完整数据塞进聊天正文。
+
+### 4. 非 TTY 和 NDJSON 事件
+
+**改造前**
+
+```text
+\x1b[?25lAssistant thinking\r
+\x1b[36mTool shell running shipctl status api\x1b[0m
+Tool shell fail exit=1 duration_ms=2300
+Thinking...
+{"tool":"shell"}
+Done!
+Partial assistant prose...
+```
+
+**改造后**
+
+![After: Non-TTY and NDJSON Event Mode](./assets/readme-after/agent-events-after.png?v=readable-20260623)
+
+非 TTY 下不保留 live UI、光标控制、动画、边框、隐藏 role state 或 raw ANSI。机器事件使用
+稳定 event type 和已文档化 schema。
+
+### 更多 Agent Chat TUI 例子
+
+完整视觉参考覆盖 Agent Chat 原子：transcript role、输入草稿、多行粘贴、IME/CJK、
+assistant streaming、tool use、tool result、choice、approval、alert、timer、background task、
+主题适配、suggestion、file mention、cancel、approval outcome、artifact、plain non-TTY fallback
+和 NDJSON event mode。
+
+![Agent Chat TUI Before / After](./assets/agent-chat-tui-before-after.png?v=readable-20260623)
+
+## 文件结构
 
 ```text
 CLI-Design/
+├── README.md
+├── README.zh.md
 ├── SKILL.md
+├── assets/
+│   ├── ordinary-cli-before-after.png
+│   ├── agent-chat-tui-before-after.png
+│   └── readme-after/
 └── references/
     ├── batch-cli-output.md
     ├── interactive-tui.md
@@ -196,41 +321,36 @@ CLI-Design/
     └── pre-ship-gate.md
 ```
 
-`SKILL.md` 是 router 和硬契约层。reference 文件承载不同 surface 的细节。
+`SKILL.md` 是短 router 和硬契约层；references 按需加载。README assets 是给人看的视觉导览，
+不是强制 agent 套用的模板。
 
-## References
+## Reference 怎么用
 
 - `batch-cli-output.md`：command result、help/usage、error、progress、log、table、
-  dry-run、destructive preview、pipe/CI behavior。
-- `interactive-tui.md`：keyboard-owned terminal component、focus、selection、
-  input mode、key hint、picker、form、pager、diff、approval、completion、live progress。
-- `agent-chat-terminal-ui.md`：terminal chat transcript、user draft、assistant state、
-  tool、approval、artifact、background work、interrupt、replay、event fallback。
-- `machine-readable-output.md`：JSON、NDJSON、pipe/plain output、stdout/stderr、
-  exit code、schema、stable enum、structured error、versioning。
+  dry-run、destructive preview、empty state、pipe/CI behavior。
+- `interactive-tui.md`：prompt、picker、multi-select、form、table/list browser、pager、
+  code/log/diff view、approval、completion menu、key semantics、fallback behavior。
+- `agent-chat-terminal-ui.md`：transcript role、input draft、assistant state、tool、
+  approval、artifact、background work、interrupt、replay、event/log fallback。
+- `machine-readable-output.md`：JSON、NDJSON、pipe/plain output、stdout/stderr、exit code、
+  schema、stable enum、structured error、compatibility、versioning。
 - `visual-language.md`：semantic role、theme token、status color/symbol、
-  focus/selection/input/disabled/danger、table、code、diff、log、accessibility。
-- `pre-ship-gate.md`：production check、stop-ship condition、robustness、redaction、
-  trust boundary、snapshot/golden matrix。
+  focus/selection/input/disabled/danger、density、border、table/code/diff/log visual。
+- `pre-ship-gate.md`：production check、stop-ship condition、robustness、security、
+  redaction、trust boundary、snapshot/golden test matrix。
 
-## Validation
+## 发布前检查
 
-修改后运行 skill validator：
-
-```bash
-python3 /Users/zhuangwei/.codex/skills/.system/skill-creator/scripts/quick_validate.py ./CLI-Design
-```
-
-建议 forward-test：
-
-- review 一个 CLI error 和 JSON output 是否满足 channel/status/exit-code agreement。
-- 设计一个 multi-select TUI，带危险确认和 non-TTY fallback。
-- 设计一个 agent-chat terminal surface，包含 tool、approval、artifact 和 replay state。
-
-## Notes For Maintainers
-
-- 保持 `SKILL.md` 简短。细节放进 6 个 reference 之一。
-- 不要新增第 7 个 reference，除非出现新的 surface family。
-- 不要重新引入 README image gallery 或固定视觉模板。
-- 例子保持中性，避免写入产品专属 case。
-- 把例子当作信息、状态、fallback 和 contract 的 recipe，不要当 mandatory layout。
+- pipe 输出没有 ANSI、spinner frame、cursor code 或装饰性空边。
+- `--json` 和 NDJSON mode 是纯 stdout 数据，字段和 enum 稳定。
+- 状态词来自同一套 vocabulary，并且能清楚映射到 UI role。
+- 长任务都有真实终态。
+- 错误在可知时有 cause、scope、impact 和 recovery。
+- 危险操作先展示影响范围，默认 No，并提供非交互 flag。
+- 技术 token 只有在它是被说明的对象、选中项、复制目标、当前操作或下一步动作时才用 accent。
+- color、glyph、animation、live redraw 都不能是唯一信号。
+- `NO_COLOR=1`、`FORCE_COLOR=1`、`TERM=dumb`、CI、non-TTY、窄屏、ASCII fallback 都不丢语义。
+- machine mode 即使强制 color，也必须保持纯数据。
+- CJK / 宽字符按 display width 对齐。
+- secret 在 log、transcript、debug output、fixture、machine event 中都必须 redacted。
+- Agent Chat live UI 有 plain log fallback 和 NDJSON/event fallback。
