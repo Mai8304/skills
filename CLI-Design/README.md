@@ -349,69 +349,7 @@ This longer case shows how the same contract handles a real chat turn with input
 state, code, file trees, diffs, errors, approvals, artifacts, and a follow-up draft. It is a
 walkthrough, not a required layout.
 
-**Before**
-
-```text
-User: fix deploy
-bot thinking...
-shell output pasted here
-exit 1
-some files changed maybe
-DELETE? y/n
-error
-You: why
-```
-
-**After**
-
-```text
-You
-  Fix the staging deploy failure and show the smallest code change.
-
-Assistant streaming
-  I will inspect the rollout, config, and the most recent deploy log first.
-
-tool call #17 shell
-  shipctl status api --env staging
-
-tool result #17 failed 2.3s
-  reason: registry auth expired
-  next: shipctl auth refresh
-
-Assistant final
-  Deploy is blocked by expired registry auth. After credentials are refreshed,
-  the smallest code change is one image tag update.
-
-workspace tree
-  services/api/
-    deploy.yaml
-    src/server.ts
-    README.md
-
-code src/server.ts
-  const port = Number(process.env.PORT ?? "8080");
-
-diff services/api/deploy.yaml
-  - image: registry.example.com/api:old
-  + image: registry.example.com/api:v1.8.2
-
-approval #9 waiting_approval
-  action: update staging deployment
-  target: services/api/deploy.yaml
-  effect: changes image tag only
-  default: Deny
-  keys: A approve once | D deny | V view diff
-
-error recovery
-  failed: registry auth expired
-  next: shipctl auth refresh
-
-artifact
-  reports/deploy-summary.json
-
-input draft
-  > Explain why this is the smallest change.|
-```
+![Before / after: Complete Agent Chat TUI walkthrough](./assets/readme-cases/agent-complete-walkthrough.png)
 
 The important part is separation: submitted messages are transcript, the current input is a
 draft, tool output is not assistant prose, code/tree/diff blocks keep their own shape,

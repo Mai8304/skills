@@ -326,69 +326,7 @@ Partial assistant prose...
 这个长 case 把输入框、tool state、代码块、文件树、diff、错误恢复、approval、artifact 和后续输入草稿放在同一轮里。
 它是 walkthrough，不是强制布局。
 
-**改造前**
-
-```text
-User: fix deploy
-bot thinking...
-shell output pasted here
-exit 1
-some files changed maybe
-DELETE? y/n
-error
-You: why
-```
-
-**改造后**
-
-```text
-You
-  Fix the staging deploy failure and show the smallest code change.
-
-Assistant streaming
-  I will inspect the rollout, config, and the most recent deploy log first.
-
-tool call #17 shell
-  shipctl status api --env staging
-
-tool result #17 failed 2.3s
-  reason: registry auth expired
-  next: shipctl auth refresh
-
-Assistant final
-  Deploy is blocked by expired registry auth. After credentials are refreshed,
-  the smallest code change is one image tag update.
-
-workspace tree
-  services/api/
-    deploy.yaml
-    src/server.ts
-    README.md
-
-code src/server.ts
-  const port = Number(process.env.PORT ?? "8080");
-
-diff services/api/deploy.yaml
-  - image: registry.example.com/api:old
-  + image: registry.example.com/api:v1.8.2
-
-approval #9 waiting_approval
-  action: update staging deployment
-  target: services/api/deploy.yaml
-  effect: changes image tag only
-  default: Deny
-  keys: A approve once | D deny | V view diff
-
-error recovery
-  failed: registry auth expired
-  next: shipctl auth refresh
-
-artifact
-  reports/deploy-summary.json
-
-input draft
-  > Explain why this is the smallest change.|
-```
+![Before / after: Complete Agent Chat TUI walkthrough](./assets/readme-cases/agent-complete-walkthrough.png)
 
 重点不是长得像这一版，而是边界清楚：提交后的消息是 transcript，当前输入是 draft；tool output
 不是 assistant prose；code、tree、diff 保持各自形态；approval 是可信 UI；error 必须给恢复路径。
