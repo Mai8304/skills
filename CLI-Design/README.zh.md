@@ -2,7 +2,7 @@
 
 > 这个 skill 用来设计生产级 terminal surface：先保证准确，再保证人能快速读懂，再保证脚本和 AI agent 能解析，最后才是视觉上的克制和好看。
 
-[English](./README.md) · **中文** · 版本 `2.0.1`
+[English](./README.md) · **中文** · 版本 `2.0.2`
 
 它关注 CLI 和 terminal TUI 在终端里“怎么说话、怎么交互”：颜色、符号、状态、进度、
 错误、布局、表格、树、diff、JSON、管道、CI、`NO_COLOR`，以及 Agent Chat Terminal UI
@@ -95,8 +95,9 @@ reader task -> surface family -> interaction contract -> channel contract -> vis
 
 ## 普通 CLI：改造前 / 改造后
 
-README 主体只展示少数典型 case；完整视觉参考放在本节末尾图片中。例子是 recipe，不是模板：
-保留信息契约，根据眼前 CLI 的风格调整布局。
+README 主体只展示少数典型 case；完整视觉参考放在本节末尾图片中。每张典型图都是
+before/after 对比，图片里的 terminal 文案统一使用英文。例子是 recipe，不是模板：保留信息契约，
+根据眼前 CLI 的风格调整布局。
 
 ### 1. 会引导的错误
 
@@ -109,7 +110,7 @@ Error: failed
 
 **改造后**
 
-![After: Errors That Guide](./assets/readme-after/ordinary-errors-after.png?v=readable-20260623)
+![Before / after: Errors That Guide](./assets/readme-cases/batch-errors.png)
 
 错误不是“红一点”就够了；它必须在可知时说清楚操作、原因、影响范围、影响结果和下一步。
 
@@ -128,7 +129,7 @@ Deploy finished. Some checks failed. Lots of log output...
 
 **改造后**
 
-![After: Semantic Color, Progress, and Result State](./assets/readme-after/ordinary-progress-after.png?v=readable-20260623)
+![Before / after: Semantic Color, Progress, and Result State](./assets/readme-cases/batch-progress.png)
 
 颜色服务于语义：绿色给成功，黄色给 warning 或 degraded state，红色给当前失败，青色给
 focus/current/next-action 角色。进度必须诚实，并且必须落到终态。
@@ -155,7 +156,7 @@ line 14 print(cfg) used after move
 
 **改造后**
 
-![After: Data Shapes and Diagnostics](./assets/readme-after/ordinary-data-after.png?v=readable-20260623)
+![Before / after: Data Shapes and Diagnostics](./assets/readme-cases/batch-data-diagnostics.png)
 
 同质数据用表格，单个对象用 key-value，诊断要呈现 source、cause、evidence 和 next action。
 对齐必须按 display width，不按 byte 或 rune。
@@ -192,19 +193,43 @@ connected with token sk-live-123456
 
 **改造后**
 
-![After: Runtime Contracts and Redaction](./assets/readme-after/ordinary-runtime-after.png?v=readable-20260623)
+![Before / after: Runtime Contracts and Redaction](./assets/readme-cases/machine-contracts.png)
 
 机器模式是契约，不能混进 ANSI、spinner frame、prose wrapper 或装饰性空行。secret 必须在
 human output、log、transcript、fixture、machine event 中先 redaction。
 
-### 更多普通 CLI 例子
+### 更多 CLI / TUI 例子
 
-完整视觉参考覆盖普通 CLI 输出原子：help、bad arguments、error、有语义角色的技术对象
-accent、进度、表格、对象详情、文件树、diff、内容块、嵌套任务、诊断、结果汇总、dry-run、
-空状态、日志、expressive notice、prompt、machine mode、CJK 宽度、pager、deprecation、
-中断、主题适配和 redaction。
+完整视觉参考覆盖 CLI/TUI 输出原子：help、bad arguments、recoverable error、progress
+lifecycle、result summary、table、destructive preview、empty state、multi-select、machine
+JSON、pipe/`NO_COLOR` fallback 和 redaction。
 
 ![Ordinary CLI Before / After](./assets/ordinary-cli-before-after.png?v=readable-20260623)
+
+## Interactive TUI：改造前 / 改造后
+
+Interactive terminal component 不只是“更好看的 prompt”。它必须先定义 focus、selection、
+input mode、submit、confirm、cancel、disabled state、danger、key hint、fallback 和 terminal
+cleanup，再谈样式。
+
+### 多选和安全确认
+
+**改造前**
+
+```text
+Restart services? y/n
+1 api
+2 worker
+3 legacy
+DELETE? y
+```
+
+**改造后**
+
+![Before / after: Interactive TUI multi-select](./assets/readme-cases/interactive-multiselect.png)
+
+这个 case 把 focus、selection、disabled reason、key hint、危险确认和安全默认值分开。它不是
+强制使用某一种 pointer、checkbox 或配色。
 
 ## Agent Chat TUI：改造前 / 改造后
 
@@ -225,7 +250,7 @@ You: explain this error and suggest the smallest fix
 
 **改造后**
 
-![After: Transcript roles and input composer](./assets/readme-after/agent-transcript-after.png?v=readable-20260623)
+![Before / after: Transcript roles and input composer](./assets/readme-cases/agent-transcript.png)
 
 输入草稿是 live UI，不是历史记录。光标移动、删除、候选项、IME 组合态都不能污染 transcript。
 
@@ -243,7 +268,7 @@ partial hidden reasoning shown to user
 
 **改造后**
 
-![After: Thinking and Tool Use](./assets/readme-after/agent-tool-after.png?v=readable-20260623)
+![Before / after: Thinking and Tool Use](./assets/readme-cases/agent-tools.png)
 
 不要展示 hidden chain-of-thought。可以展示可观察摘要和受限 tool 输出，并带上终态、
 duration、command identity 和必要 evidence。
@@ -266,7 +291,7 @@ LATER task sync-42 queued
 
 **改造后**
 
-![After: Approvals, Background Work, and Artifacts](./assets/readme-after/agent-approval-after.png?v=readable-20260623)
+![Before / after: Approvals, Background Work, and Artifacts](./assets/readme-cases/agent-approval-artifact.png)
 
 审批是 decision atom。后台任务要有 identity、state、owner、timing 和 resume behavior。大
 artifact 只展示摘要和稳定引用，不把完整数据塞进聊天正文。
@@ -287,7 +312,7 @@ Partial assistant prose...
 
 **改造后**
 
-![After: Non-TTY and NDJSON Event Mode](./assets/readme-after/agent-events-after.png?v=readable-20260623)
+![Before / after: Non-TTY and NDJSON Event Mode](./assets/readme-cases/agent-events.png)
 
 非 TTY 下不保留 live UI、光标控制、动画、边框、隐藏 role state 或 raw ANSI。机器事件使用
 稳定 event type 和已文档化 schema。
@@ -311,7 +336,7 @@ CLI-Design/
 ├── assets/
 │   ├── ordinary-cli-before-after.png
 │   ├── agent-chat-tui-before-after.png
-│   └── readme-after/
+│   └── readme-cases/
 └── references/
     ├── batch-cli-output.md
     ├── interactive-tui.md

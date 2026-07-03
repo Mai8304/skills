@@ -3,7 +3,7 @@
 > A production-grade agent skill for designing terminal surfaces that are accurate first,
 > human-usable second, script/agent-usable third, and visually calm last.
 
-**English** · [中文](./README.zh.md) · Version `2.0.1`
+**English** · [中文](./README.zh.md) · Version `2.0.2`
 
 This skill is for terminal surfaces: what a CLI prints, how a TUI behaves, how color and
 symbols carry state, how progress and errors recover, how output degrades in pipes and CI,
@@ -100,7 +100,8 @@ or a polluted machine contract.
 ## Before / after: ordinary CLI
 
 The README shows a few representative cases. The PNG gallery after these examples carries
-the broader visual reference. Examples are recipes, not templates: preserve the information
+the broader visual reference. Each representative image is a before/after comparison with
+English terminal text. Examples are recipes, not templates: preserve the information
 contract and adapt the layout to the CLI in front of you.
 
 ### 1. Errors That Guide
@@ -114,7 +115,7 @@ Error: failed
 
 **After**
 
-![After: Errors That Guide](./assets/readme-after/ordinary-errors-after.png?v=readable-20260623)
+![Before / after: Errors That Guide](./assets/readme-cases/batch-errors.png)
 
 An error is not just red text. It must name the operation, cause, affected scope, impact,
 and a concrete recovery step when knowable.
@@ -134,7 +135,7 @@ Deploy finished. Some checks failed. Lots of log output...
 
 **After**
 
-![After: Semantic Color, Progress, and Result State](./assets/readme-after/ordinary-progress-after.png?v=readable-20260623)
+![Before / after: Semantic Color, Progress, and Result State](./assets/readme-cases/batch-progress.png)
 
 Use color for semantic state: green for success, yellow for warning or degraded state, red
 for current failure, cyan for focus/current/next-action roles. Progress must be honest and
@@ -162,7 +163,7 @@ line 14 print(cfg) used after move
 
 **After**
 
-![After: Data Shapes and Diagnostics](./assets/readme-after/ordinary-data-after.png?v=readable-20260623)
+![Before / after: Data Shapes and Diagnostics](./assets/readme-cases/batch-data-diagnostics.png)
 
 Use tables for homogeneous rows, key-value blocks for one object, and structured diagnostics
 for source, cause, evidence, and next action. Alignment must use display width, not byte or
@@ -200,21 +201,45 @@ connected with token sk-live-123456
 
 **After**
 
-![After: Runtime Contracts and Redaction](./assets/readme-after/ordinary-runtime-after.png?v=readable-20260623)
+![Before / after: Runtime Contracts and Redaction](./assets/readme-cases/machine-contracts.png)
 
 Machine mode is a contract. It must not mix ANSI, spinner frames, prose wrappers, or
 decorative blank lines into stdout. Secrets must be redacted in human output, logs,
 transcripts, fixtures, and machine events.
 
-### More Ordinary CLI Cases
+### More CLI / TUI Cases
 
-The full visual reference covers ordinary CLI atoms such as help, bad arguments, errors,
-role-bearing technical-object accent, progress, tables, object details, file trees, diffs,
-content blocks, nested tasks, diagnostics, summaries, dry-run previews, empty states, logs,
-expressive notices, prompts, machine mode, CJK width, pager behavior, deprecations,
-interruption, theme adaptation, and redaction.
+The full visual reference covers CLI/TUI atoms such as help, bad arguments, recoverable
+errors, progress lifecycle, result summaries, tables, destructive previews, empty states,
+multi-select, machine JSON, pipe/`NO_COLOR` fallback, and redaction.
 
 ![Ordinary CLI Before / After](./assets/ordinary-cli-before-after.png?v=readable-20260623)
+
+## Before / after: Interactive TUI
+
+Interactive terminal components are not just prettier prompts. They must define focus,
+selection, input mode, submit, confirm, cancel, disabled state, danger, key hints, fallback,
+and terminal cleanup before styling.
+
+### Multi-select and safe confirmation
+
+**Before**
+
+```text
+Restart services? y/n
+1 api
+2 worker
+3 legacy
+DELETE? y
+```
+
+**After**
+
+![Before / after: Interactive TUI multi-select](./assets/readme-cases/interactive-multiselect.png)
+
+This case keeps focus, selection, disabled reason, key hints, dangerous confirmation, and
+safe default separate. It is not a mandate to use this exact pointer, checkbox, or color
+scheme.
 
 ## Before / after: Agent Chat TUI
 
@@ -236,7 +261,7 @@ You: explain this error and suggest the smallest fix
 
 **After**
 
-![After: Transcript roles and input composer](./assets/readme-after/agent-transcript-after.png?v=readable-20260623)
+![Before / after: Transcript roles and input composer](./assets/readme-cases/agent-transcript.png)
 
 The live draft is not transcript history. Cursor movement, deletion, suggestions, and IME
 composition are input UI until the user submits.
@@ -255,7 +280,7 @@ partial hidden reasoning shown to user
 
 **After**
 
-![After: Thinking and Tool Use](./assets/readme-after/agent-tool-after.png?v=readable-20260623)
+![Before / after: Thinking and Tool Use](./assets/readme-cases/agent-tools.png)
 
 Never expose hidden chain-of-thought. Show concise observable summaries and bounded tool
 results with terminal state, duration, command identity, and evidence links when useful.
@@ -278,7 +303,7 @@ LATER task sync-42 queued
 
 **After**
 
-![After: Approvals, Background Work, and Artifacts](./assets/readme-after/agent-approval-after.png?v=readable-20260623)
+![Before / after: Approvals, Background Work, and Artifacts](./assets/readme-cases/agent-approval-artifact.png)
 
 Approvals are decision atoms. Background tasks need identity, state, owner, timing, and
 resume behavior. Large artifacts get summaries and stable references, not full dumps in the
@@ -300,7 +325,7 @@ Partial assistant prose...
 
 **After**
 
-![After: Non-TTY and NDJSON Event Mode](./assets/readme-after/agent-events-after.png?v=readable-20260623)
+![Before / after: Non-TTY and NDJSON Event Mode](./assets/readme-cases/agent-events.png)
 
 Off-TTY output removes live UI, cursor tricks, frames, animation, hidden role state, and raw
 ANSI. Machine streams use stable event types and documented schemas.
@@ -324,7 +349,7 @@ CLI-Design/
 ├── assets/
 │   ├── ordinary-cli-before-after.png
 │   ├── agent-chat-tui-before-after.png
-│   └── readme-after/
+│   └── readme-cases/
 └── references/
     ├── batch-cli-output.md
     ├── interactive-tui.md
