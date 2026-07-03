@@ -313,7 +313,7 @@ Partial assistant prose...
 
 **改造后**
 
-![Before / after: Non-TTY and NDJSON Event Mode](./assets/readme-cases/agent-events.png)
+![Before / after: Non-TTY and NDJSON Event Mode](./assets/readme-cases/agent-events.png?v=event-contract-20260703)
 
 非 TTY 下不保留 live UI、光标控制、动画、边框、隐藏 role state 或 raw ANSI。机器事件使用
 稳定 event type 和已文档化 schema。
@@ -341,14 +341,13 @@ not-ready state 和 setup-needed skill。生产级错误要说明 operation、ca
 
 ![Before / after: Error recovery and skill state](./assets/readme-cases/agent-error-skill.png)
 
-### 更多 Agent Chat TUI 例子
+### Agent Chat 覆盖检查清单
 
-完整视觉参考覆盖 Agent Chat 原子：transcript role、输入草稿、多行粘贴、IME/CJK、
-assistant streaming、thinking 摘要、tool use、tool result、code block、file tree、diff、choice、
-approval、recoverable error、alert、timer、background task、主题适配、suggestion、file mention、
-cancel、approval outcome、artifact、plain non-TTY fallback 和 NDJSON event mode。
-
-![Agent Chat TUI Before / After](./assets/agent-chat-tui-before-after.png?v=readable-20260623)
+上面的图片是组件级检查，不是一套固定全屏模板。生产 review 时，还要确认真实渲染出来的 Agent
+Chat flow 覆盖 transcript role、输入草稿、queued input、IME/CJK、assistant streaming/final
+state、低权重 thinking、tool running/completed/failed state、受限长输出、不可信输出、code/file/diff
+block、approval、recoverable error、background work、artifact、interrupt、replay、plain non-TTY
+fallback 和 NDJSON event mode。
 
 ## 文件结构
 

@@ -335,7 +335,7 @@ Partial assistant prose...
 
 **After**
 
-![Before / after: Non-TTY and NDJSON Event Mode](./assets/readme-cases/agent-events.png)
+![Before / after: Non-TTY and NDJSON Event Mode](./assets/readme-cases/agent-events.png?v=event-contract-20260703)
 
 Off-TTY output removes live UI, cursor tricks, frames, animation, hidden role state, and raw
 ANSI. Machine streams use stable event types and documented schemas.
@@ -365,15 +365,14 @@ names operation, cause, impact, next step, and an inspectable log or artifact.
 
 ![Before / after: Error recovery and skill state](./assets/readme-cases/agent-error-skill.png)
 
-### More Agent Chat TUI Cases
+### Agent Chat Coverage Checklist
 
-The full visual reference covers Agent Chat atoms such as transcript roles, input draft,
-multiline paste, IME/CJK composition, assistant streaming, thinking summaries, tool use,
-tool results, code blocks, file trees, diffs, choices, approvals, recoverable errors,
-alerts, timers, background tasks, theme adaptation, suggestions, file mentions,
-cancellation, approval outcomes, artifacts, plain non-TTY fallback, and NDJSON event mode.
-
-![Agent Chat TUI Before / After](./assets/agent-chat-tui-before-after.png?v=readable-20260623)
+The images above are component-level checks, not one full-screen template. For production
+review, verify the rendered Agent Chat flow still covers transcript roles, input draft,
+queued input, IME/CJK composition, assistant streaming/final states, quiet thinking, tool
+running/completed/failed states, bounded long output, untrusted output, code/file/diff
+blocks, approvals, recoverable errors, background work, artifacts, interruption, replay,
+plain non-TTY fallback, and NDJSON event mode.
 
 ## Skill contents
 
